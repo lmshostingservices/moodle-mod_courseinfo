@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="mod/courseinfo/db" VERSION="2026041700042" COMMENT="AI Course Information module tables">
+  <TABLES>
+    <TABLE NAME="courseinfo" COMMENT="AI Course Information activity instances">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" COMMENT="Course ID"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Activity name"/>
+        <FIELD NAME="intro" TYPE="text" NOTNULL="false" COMMENT="Activity introduction"/>
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" COMMENT="Intro text format"/>
+        <FIELD NAME="unitcode" TYPE="char" LENGTH="50" NOTNULL="false" COMMENT="Unit of competency code e.g. BSBWHS211"/>
+        <FIELD NAME="unittitle" TYPE="char" LENGTH="255" NOTNULL="false" COMMENT="Unit of competency title"/>
+        <FIELD NAME="nominalhours" TYPE="int" LENGTH="5" NOTNULL="false" COMMENT="Nominal hours from NCVER or manual entry"/>
+        <FIELD NAME="enablevol" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="Enable Volume of Learning section 1=yes 0=no"/>
+        <FIELD NAME="enableasqa" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="Enable ASQA compliance sections (RPL, Complaints and Appeals) 1=yes 0=no"/>
+        <FIELD NAME="generatedhtml" TYPE="text" NOTNULL="false" COMMENT="Generated course information HTML"/>
+        <FIELD NAME="generatedjson" TYPE="text" NOTNULL="false" COMMENT="Generated course information JSON data"/>
+        <FIELD NAME="scanneddata" TYPE="text" NOTNULL="false" COMMENT="Last scanned activity data JSON"/>
+        <FIELD NAME="volumebreakdown" TYPE="text" NOTNULL="false" COMMENT="Volume of learning breakdown JSON"/>
+        <FIELD NAME="lastgenerated" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Timestamp of last generation"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="course" UNIQUE="false" FIELDS="course"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="courseinfo_ack" COMMENT="Learner acknowledgement audit trail for AI Course Information">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseinfoid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="FK to courseinfo.id"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Moodle user ID"/>
+        <FIELD NAME="timeacknowledged" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Unix timestamp of acknowledgement"/>
+        <FIELD NAME="ipaddress" TYPE="char" LENGTH="45" NOTNULL="false" COMMENT="IPv4 or IPv6 remote address"/>
+        <FIELD NAME="useragent" TYPE="text" NOTNULL="false" COMMENT="HTTP User-Agent string"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="courseinfoid" UNIQUE="false" FIELDS="courseinfoid"/>
+        <INDEX NAME="userid" UNIQUE="false" FIELDS="userid"/>
+        <INDEX NAME="courseinfo_user" UNIQUE="true" FIELDS="courseinfoid,userid"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

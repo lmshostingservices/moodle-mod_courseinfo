@@ -1,0 +1,746 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   AI Course Information — styles.css  v1.0.47
+   Single typographic scale (px-only), calmer accent (2px), reduced visual
+   noise. The plugin's CSS is now the single source of truth on type — the
+   AI's inline font-size declarations are stripped server-side so this file
+   wins every time. All bug-fix rules (font-family, width guards, FA icons,
+   reveal animations) fully preserved.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Design tokens ──────────────────────────────────────────────────────
+   These are defaults; JS overrides --ci-primary / --ci-secondary /
+   --ci-surface / --ci-border via applyThemeCssVars() from Moodle's
+   brandcolor so the plugin always matches the site theme.              */
+#courseinfo-app {
+    --ci-radius-sm:       6px;
+    --ci-radius:          12px;
+    --ci-radius-lg:       16px;
+    --ci-shadow-xs:       0 1px 2px rgba(0,0,0,0.06);
+    --ci-shadow-sm:       0 2px 6px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --ci-shadow:          0 4px 16px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.04);
+    --ci-shadow-hover:    0 8px 24px rgba(0,0,0,0.10), 0 2px 6px rgba(0,0,0,0.05);
+    --ci-transition:      0.2s ease;
+    --ci-border-default:  #e2eaf6;
+    --ci-text-primary:    #1e293b;
+    --ci-text-secondary:  #475569;
+    --ci-text-tertiary:   #94a3b8;
+
+    /* ── ONE TYPOGRAPHIC SCALE — px only, no em compounding ─────────── */
+    --ci-fs-label:        11px;   /* uppercase tags, badges, eyebrow labels */
+    --ci-fs-caption:      12px;   /* table headers, fine print */
+    --ci-fs-body:         13.5px; /* default paragraph and list text       */
+    --ci-fs-h3:           15px;   /* sub-headings inside a card            */
+    --ci-fs-h2:           17px;   /* section card heading                  */
+    --ci-fs-metric:       16px;   /* numeric value in stat tile            */
+    --ci-lh-body:         1.65;
+    --ci-lh-tight:        1.3;
+
+    max-width: 100%;
+    width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   WIDTH & BOX-SIZING GUARDS
+   (BUG-CI-MAXWIDTH / BUG-CI-BOXWIDTH / BUG-CI-BANNERWIDTH)
+   ═══════════════════════════════════════════════════════════════════════ */
+#courseinfo-generated {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#courseinfo-generated > div:first-child {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
+#courseinfo-generated > div {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#courseinfo-generated .ci-header,
+#courseinfo-content .ci-header {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FONT INHERITANCE
+   (BUG-CI-FONTRESET)
+   ═══════════════════════════════════════════════════════════════════════ */
+#courseinfo-content,
+#courseinfo-generated {
+    font-family: inherit;
+    line-height: 1.68;
+    color: var(--ci-text-primary, #1e293b);
+}
+
+#courseinfo-content *:not(i),
+#courseinfo-generated *:not(i) {
+    font-family: inherit !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FONT AWESOME RESTORE
+   (BUG-CI-ICONBREAK / BUG-CI-ICONFA6)
+   ═══════════════════════════════════════════════════════════════════════ */
+#courseinfo-content .fa,
+#courseinfo-content i[class*="fa-"],
+#courseinfo-generated .fa,
+#courseinfo-generated i[class*="fa-"] {
+    font-family: FontAwesome, "Font Awesome 6 Free", "Font Awesome 5 Free" !important;
+    font-style: normal !important;
+    font-weight: 900 !important;
+    font-variant: normal !important;
+    text-transform: none !important;
+    speak: never !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    display: inline-block !important;
+}
+
+/* ── ci-reveal: always immediately visible ──────────────────────────────
+   (BUG-CI-BLANK-CONTENT) The AI generates IntersectionObserver scripts
+   that init cards at opacity:0. Scripts injected via innerHTML never run.
+   This rule guarantees content is always visible.                       */
+#courseinfo-generated .ci-reveal {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+    visibility: visible !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TOOLBAR
+   Clean command bar — white surface, subtle shadow, clear action groups.
+   ═══════════════════════════════════════════════════════════════════════ */
+#courseinfo-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 16px;
+    background: #fff;
+    border: 1px solid var(--ci-border, var(--ci-border-default));
+    border-radius: var(--ci-radius, 12px);
+    box-shadow: var(--ci-shadow-xs, 0 1px 2px rgba(0,0,0,0.06));
+    margin-bottom: 20px;
+}
+
+#courseinfo-toolbar .d-flex {
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+}
+
+#courseinfo-toolbar .btn {
+    border-radius: var(--ci-radius-sm, 6px) !important;
+    font-size: var(--ci-fs-body, 13.5px) !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.01em;
+    transition: box-shadow var(--ci-transition, 0.2s ease),
+                transform var(--ci-transition, 0.2s ease),
+                background var(--ci-transition, 0.2s ease) !important;
+}
+
+#courseinfo-toolbar .btn:active {
+    transform: scale(0.97);
+}
+
+#courseinfo-toolbar .badge {
+    border-radius: var(--ci-radius-sm, 6px) !important;
+    font-size: var(--ci-fs-caption, 12px) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+    vertical-align: middle;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   STATUS BAR
+   ═══════════════════════════════════════════════════════════════════════ */
+#courseinfo-status {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 18px !important;
+    background: var(--ci-surface, #eef4ff) !important;
+    border: 1px solid var(--ci-border, var(--ci-border-default)) !important;
+    border-radius: var(--ci-radius, 12px) !important;
+    font-size: var(--ci-fs-body, 13.5px) !important;
+    color: var(--ci-text-primary, #1e293b) !important;
+    margin-bottom: 16px !important;
+    animation: ci-status-in 0.22s ease;
+}
+
+@keyframes ci-status-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CARDS — Premium card system
+   Applied to all ci-card elements across every container in the plugin.
+   ═══════════════════════════════════════════════════════════════════════ */
+#courseinfo-content .ci-card,
+#courseinfo-generated .ci-card,
+#courseinfo-custom-boxes .ci-card,
+#courseinfo-custom-boxes .ci-custom-box,
+#courseinfo-volume .ci-card,
+#courseinfo-scan-results .ci-card {
+    background: #fff !important;
+    border: 1px solid var(--ci-border, var(--ci-border-default)) !important;
+    border-top: 1px solid var(--ci-border, var(--ci-border-default)) !important;
+    border-right: 1px solid var(--ci-border, var(--ci-border-default)) !important;
+    border-bottom: 1px solid var(--ci-border, var(--ci-border-default)) !important;
+    border-left: 1px solid var(--ci-border, var(--ci-border-default)) !important;
+    border-radius: var(--ci-radius, 12px) !important;
+    box-shadow: var(--ci-shadow-sm) !important;
+    margin-bottom: 14px !important;
+    transition: box-shadow var(--ci-transition, 0.2s ease),
+                transform var(--ci-transition, 0.2s ease) !important;
+    overflow: hidden !important;
+}
+
+/* Lift cards on hover */
+#courseinfo-content .ci-card:hover,
+#courseinfo-generated .ci-card:hover,
+#courseinfo-custom-boxes .ci-card:hover,
+#courseinfo-custom-boxes .ci-custom-box:hover,
+#courseinfo-volume .ci-card:hover,
+#courseinfo-scan-results .ci-card:hover {
+    box-shadow: var(--ci-shadow-hover) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* ── Left accent bar on every section card ───────────────────────────── */
+/* v1.0.47: reduced from 4px to 2px for a calmer, more editorial feel.   */
+/* Retroactively applied to all existing generated content.              */
+#courseinfo-content .ci-card,
+#courseinfo-generated .ci-card {
+    border-left: 2px solid var(--ci-primary, #1a73e8) !important;
+}
+
+/* ── Icon circles — gradient fill ───────────────────────────────────── */
+/* Upgraded from flat surface tint to gradient for a premium feel       */
+#courseinfo-content .ci-icon,
+#courseinfo-generated .ci-icon,
+#courseinfo-scan-results .ci-icon,
+#courseinfo-volume .ci-icon,
+#courseinfo-custom-boxes .ci-icon {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg,
+        var(--ci-primary, #1a73e8) 0%,
+        color-mix(in srgb, var(--ci-primary, #1a73e8) 70%, #000) 100%
+    ) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    transition: transform 0.3s ease !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18) !important;
+}
+
+/* Force icon colour to white when inside the gradient circle           */
+#courseinfo-content .ci-icon .fa,
+#courseinfo-content .ci-icon i,
+#courseinfo-generated .ci-icon .fa,
+#courseinfo-generated .ci-icon i {
+    color: #fff !important;
+}
+
+/* Subtle scale on card hover (v1.0.47: removed rotate for calmer interaction) */
+#courseinfo-content .ci-card:hover .ci-icon,
+#courseinfo-generated .ci-card:hover .ci-icon {
+    transform: scale(1.06) !important;
+}
+
+/* ── Hero banner (.ci-header) ────────────────────────────────────────── */
+#courseinfo-content .ci-header,
+#courseinfo-generated .ci-header {
+    border-radius: var(--ci-radius, 12px) !important;
+    overflow: hidden;
+    margin-bottom: 14px !important;
+    position: relative !important;
+}
+
+#courseinfo-content .ci-header h1,
+#courseinfo-content .ci-header h2,
+#courseinfo-content .ci-header h3,
+#courseinfo-generated .ci-header h1,
+#courseinfo-generated .ci-header h2,
+#courseinfo-generated .ci-header h3 {
+    color: #fff !important;
+    border-bottom: none !important;
+}
+
+/* ── Card heading typography ─────────────────────────────────────────── */
+#courseinfo-content .ci-card h2,
+#courseinfo-content .ci-card h3,
+#courseinfo-generated .ci-card h2,
+#courseinfo-generated .ci-card h3,
+#courseinfo-scan-results .ci-card h2,
+#courseinfo-scan-results .ci-card h3,
+#courseinfo-volume .ci-card h2,
+#courseinfo-volume .ci-card h3 {
+    color: var(--ci-text-primary, #1e293b) !important;
+    border-bottom: none !important;
+    margin-top: 0 !important;
+    font-size: var(--ci-fs-h2, 17px) !important;
+    line-height: var(--ci-lh-tight, 1.3) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TYPOGRAPHY IN GENERATED CONTENT
+   v1.0.47 — single px-based scale; the AI's font-size declarations are
+   stripped server-side so this CSS is the only authority on text sizing.
+   Every rule uses !important to win against any inline styles the AI
+   may emit on individual elements.
+   ═══════════════════════════════════════════════════════════════════════ */
+#courseinfo-content h2,
+#courseinfo-generated h2 {
+    color: var(--ci-primary, var(--primary, #1a73e8)) !important;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    margin-top: 24px !important;
+    font-size: var(--ci-fs-h2, 17px) !important;
+    line-height: var(--ci-lh-tight, 1.3) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em !important;
+}
+
+#courseinfo-content h3,
+#courseinfo-content h4,
+#courseinfo-generated h3,
+#courseinfo-generated h4 {
+    color: var(--ci-text-primary, #1e293b) !important;
+    margin-top: 16px !important;
+    font-size: var(--ci-fs-h3, 15px) !important;
+    line-height: var(--ci-lh-tight, 1.3) !important;
+    font-weight: 600 !important;
+}
+
+/* Section label above card heading — small tracked uppercase */
+#courseinfo-content .ci-section-label,
+#courseinfo-generated .ci-section-label {
+    font-size: var(--ci-fs-label, 11px) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+    color: var(--ci-primary, #1a73e8) !important;
+    margin-bottom: 2px !important;
+    display: block !important;
+    line-height: var(--ci-lh-tight, 1.3) !important;
+}
+
+/* Body text — locked to single body size everywhere */
+#courseinfo-content p,
+#courseinfo-content li,
+#courseinfo-content span:not(.ci-stat-value):not(.ci-stat-label):not(.ci-section-label):not(.ci-time-pill):not(.ci-badge):not(.badge),
+#courseinfo-generated p,
+#courseinfo-generated li,
+#courseinfo-generated span:not(.ci-stat-value):not(.ci-stat-label):not(.ci-section-label):not(.ci-time-pill):not(.ci-badge):not(.badge) {
+    color: var(--ci-text-secondary, #475569) !important;
+    font-size: var(--ci-fs-body, 13.5px) !important;
+    line-height: var(--ci-lh-body, 1.65) !important;
+}
+
+#courseinfo-content p,
+#courseinfo-generated p {
+    margin-bottom: 8px !important;
+}
+
+/* Hero banner heading — keep larger but still controlled */
+#courseinfo-content .ci-header h1,
+#courseinfo-content .ci-header h2,
+#courseinfo-generated .ci-header h1,
+#courseinfo-generated .ci-header h2 {
+    font-size: 22px !important;
+    line-height: var(--ci-lh-tight, 1.3) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.02em !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   QUICK STATS STRIP
+   Retroactive improvements to stat tiles
+   ═══════════════════════════════════════════════════════════════════════ */
+#courseinfo-generated .ci-stat-tile,
+#courseinfo-content .ci-stat-tile {
+    border-radius: 10px !important;
+    border: 1px solid var(--ci-border, var(--ci-border-default)) !important;
+    background: #fff !important;
+    transition: box-shadow 0.2s ease, transform 0.2s ease !important;
+}
+
+#courseinfo-generated .ci-stat-tile:hover,
+#courseinfo-content .ci-stat-tile:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.09) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Stat tile icon circles — match card icon system */
+#courseinfo-generated .ci-stat-tile .ci-icon,
+#courseinfo-content .ci-stat-tile .ci-icon {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+}
+
+/* FIX-CI-STAT-ORDER (v1.0.48): Force the small uppercase label to render
+   ABOVE the prominent value in every stat tile, regardless of the DOM order
+   the AI emitted. Older generated documents put the value first and the
+   label second, which read like a stat dashboard rather than a labelled
+   metadata field. The new prompt emits label-first (matching DOM and visual
+   order, which is the accessibility-correct way). For documents already in
+   the database that still have the old value-first DOM, the flexbox 'order'
+   property below pins the label visually first (order 1) and the value
+   visually second (order 2) regardless of DOM order — works in every
+   browser flexbox is supported and is a no-op for the new label-first DOM
+   (because it already matches the order values). */
+
+/* Stat label — pinned to visual position 1 (top) */
+#courseinfo-generated .ci-stat-label,
+#courseinfo-content .ci-stat-label {
+    order: 1 !important;
+    font-size: var(--ci-fs-label, 11px) !important;
+    line-height: var(--ci-lh-tight, 1.3) !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.07em !important;
+    color: var(--ci-text-tertiary, #94a3b8) !important;
+    margin-top: 0 !important;
+}
+
+/* Stat value — pinned to visual position 2 (bottom), prominent number */
+#courseinfo-generated .ci-stat-value,
+#courseinfo-content .ci-stat-value {
+    order: 2 !important;
+    font-size: var(--ci-fs-metric, 16px) !important;
+    line-height: var(--ci-lh-tight, 1.3) !important;
+    font-weight: 800 !important;
+    color: var(--ci-text-primary, #1e293b) !important;
+    letter-spacing: -0.01em !important;
+    margin-top: 2px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TABLES
+   (BUG-CI-TH-COLOR)
+   ═══════════════════════════════════════════════════════════════════════ */
+#courseinfo-content table,
+#courseinfo-generated table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 12px 0 !important;
+    border-color: var(--ci-border, var(--ci-border-default)) !important;
+}
+
+#courseinfo-content table td,
+#courseinfo-content table th,
+#courseinfo-generated table td,
+#courseinfo-generated table th {
+    padding: 10px 14px !important;
+    text-align: left !important;
+    border-bottom: 1px solid var(--ci-border, var(--ci-border-default)) !important;
+    vertical-align: middle !important;
+}
+
+#courseinfo-content table th,
+#courseinfo-generated table th {
+    background: var(--ci-surface, #f4f7fb) !important;
+    font-weight: 700 !important;
+    font-size: var(--ci-fs-caption, 12px) !important;
+    color: var(--ci-text-primary, #1e293b) !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+}
+
+#courseinfo-content table tbody tr:last-child td,
+#courseinfo-generated table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+
+#courseinfo-content table tbody tr:hover td,
+#courseinfo-generated table tbody tr:hover td {
+    background: var(--ci-hover, #f7faff) !important;
+}
+
+#courseinfo-content [style*="#e2e8f0"],
+#courseinfo-generated [style*="#e2e8f0"] {
+    border-color: var(--ci-border, var(--ci-border-default)) !important;
+}
+
+#courseinfo-content [style*="#f8faff"],
+#courseinfo-generated [style*="#f8faff"] {
+    background-color: var(--ci-surface, #f4f7fb) !important;
+}
+
+/* ── Step tables ──────────────────────────────────────────────────────── */
+#courseinfo-content .ci-step-table td:first-child,
+#courseinfo-generated .ci-step-table td:first-child {
+    vertical-align: middle !important;
+    text-align: center !important;
+}
+
+#courseinfo-content .ci-step-table td:first-child > *,
+#courseinfo-generated .ci-step-table td:first-child > * {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+}
+
+/* Step number circles — bold and prominent */
+#courseinfo-content .ci-step-circle,
+#courseinfo-generated .ci-step-circle {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg,
+        var(--ci-primary, #1a73e8) 0%,
+        color-mix(in srgb, var(--ci-primary, #1a73e8) 75%, #000) 100%
+    ) !important;
+    color: #fff !important;
+    font-weight: 800 !important;
+    font-size: var(--ci-fs-body, 13.5px) !important;
+    line-height: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
+}
+
+#courseinfo-content .ci-step-table tr.ci-tr-hover:hover,
+#courseinfo-generated .ci-step-table tr.ci-tr-hover:hover {
+    background-color: var(--ci-hover, #f7faff) !important;
+}
+
+/* Time column — never wrap "30 min" onto two lines */
+#courseinfo-content .ci-step-table td:last-child,
+#courseinfo-generated .ci-step-table td:last-child {
+    white-space: nowrap;
+    min-width: 80px;
+    width: 80px;
+    text-align: right;
+    vertical-align: middle;
+}
+
+#courseinfo-content .ci-step-table td:last-child span,
+#courseinfo-content .ci-step-table td:last-child div,
+#courseinfo-generated .ci-step-table td:last-child span,
+#courseinfo-generated .ci-step-table td:last-child div {
+    white-space: nowrap;
+    display: inline-block;
+}
+
+/* ── Time pills — consistent styling ────────────────────────────────── */
+#courseinfo-content .ci-time-pill,
+#courseinfo-generated .ci-time-pill {
+    background: rgba(0,0,0,0.06) !important;
+    color: var(--ci-primary, #1a73e8) !important;
+    padding: 3px 10px !important;
+    border-radius: 20px !important;
+    font-weight: 700 !important;
+    font-size: var(--ci-fs-caption, 12px) !important;
+    line-height: var(--ci-lh-tight, 1.3) !important;
+    white-space: nowrap !important;
+    display: inline-block !important;
+    letter-spacing: 0.01em !important;
+}
+
+/* ── Learner Acknowledgement Box — premium gold styling ─────────────── */
+/* Override inline styles retroactively for a richer, more formal look  */
+#courseinfo-generated [style*="fffdf0"],
+#courseinfo-generated [style*="fffef0"],
+#courseinfo-content [style*="fffdf0"],
+#courseinfo-content [style*="fffef0"] {
+    background: linear-gradient(135deg, #fffdf0 0%, #fff9e0 100%) !important;
+    border: 2px solid #d4a820 !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 12px rgba(212,168,32,0.12) !important;
+}
+
+/* ── Consumer Rights Notice — amber glassmorphism card ───────────────── */
+/* Retroactively enrich the amber card styling                           */
+#courseinfo-generated [style*="fffef0"][style*="d4a017"],
+#courseinfo-content [style*="fffef0"][style*="d4a017"] {
+    background: linear-gradient(135deg, #fffdf5 0%, #fff8e1 100%) !important;
+    border: 1px solid #e8c440 !important;
+    border-radius: 10px !important;
+}
+
+/* ── Support grid cards — subtle icon-colour top bar ────────────────── */
+#courseinfo-generated .ci-support-card,
+#courseinfo-content .ci-support-card {
+    border-radius: 8px !important;
+    border: 1px solid var(--ci-border, var(--ci-border-default)) !important;
+    background: var(--ci-surface, #f4f7fb) !important;
+    transition: box-shadow 0.2s ease, transform 0.2s ease !important;
+    padding: 14px !important;
+}
+
+#courseinfo-generated .ci-support-card:hover,
+#courseinfo-content .ci-support-card:hover {
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ── Activity type badge pills ───────────────────────────────────────── */
+#courseinfo-content .ci-badge,
+#courseinfo-generated .ci-badge {
+    font-size: var(--ci-fs-label, 11px) !important;
+    line-height: var(--ci-lh-tight, 1.3) !important;
+    font-weight: 700 !important;
+    padding: 2px 9px !important;
+    border-radius: 20px !important;
+    letter-spacing: 0.02em !important;
+    vertical-align: middle !important;
+    display: inline-block !important;
+}
+
+/* ── Course outcomes checklist icons ─────────────────────────────────── */
+#courseinfo-content li .fa-check,
+#courseinfo-generated li .fa-check {
+    color: var(--ci-primary, #1a73e8) !important;
+    margin-right: 8px !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   SCAN RESULTS CONTAINER
+   ═══════════════════════════════════════════════════════════════════════ */
+#courseinfo-scan-results {
+    margin-bottom: 20px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   CUSTOM BOXES
+   (BUG-CI-BOXCSS)
+   ═══════════════════════════════════════════════════════════════════════ */
+#courseinfo-custom-boxes .ci-custom-box {
+    transition: box-shadow var(--ci-transition, 0.2s ease),
+                transform var(--ci-transition, 0.2s ease);
+}
+
+.ci-box-controls {
+    opacity: 0;
+    transition: opacity var(--ci-transition, 0.2s ease);
+}
+
+.ci-custom-box:hover .ci-box-controls {
+    opacity: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MODAL — Add / Edit Custom Box
+   ═══════════════════════════════════════════════════════════════════════ */
+#ci-box-modal {
+    animation: ci-modal-backdrop-in 0.2s ease;
+}
+
+@keyframes ci-modal-backdrop-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+#ci-box-modal-inner {
+    animation: ci-modal-slide-in 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes ci-modal-slide-in {
+    from { transform: translateY(-20px); opacity: 0; }
+    to   { transform: translateY(0);     opacity: 1; }
+}
+
+#ci-icon-picker button {
+    border-radius: var(--ci-radius-sm, 6px) !important;
+    transition: background var(--ci-transition, 0.2s ease),
+                border-color var(--ci-transition, 0.2s ease) !important;
+}
+
+#ci-icon-picker button:hover {
+    border-color: #c0c8d8 !important;
+    background: #eef3fa !important;
+}
+
+#ci-box-body:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.14);
+    border-radius: var(--ci-radius-sm, 6px);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   PRINT
+   ═══════════════════════════════════════════════════════════════════════ */
+@media print {
+    #courseinfo-toolbar,
+    #courseinfo-status,
+    #courseinfo-scan-results,
+    .ci-box-controls,
+    .breadcrumb-nav,
+    #page-header,
+    #page-footer,
+    nav,
+    .drawer {
+        display: none !important;
+    }
+
+    #courseinfo-app {
+        padding: 0;
+    }
+
+    #courseinfo-content,
+    #courseinfo-generated,
+    #courseinfo-custom-boxes {
+        margin: 0;
+        padding: 0;
+    }
+
+    /* No hover effects in print */
+    #courseinfo-content .ci-card:hover,
+    #courseinfo-generated .ci-card:hover,
+    #courseinfo-custom-boxes .ci-card:hover,
+    #courseinfo-volume .ci-card:hover,
+    #courseinfo-scan-results .ci-card:hover {
+        box-shadow: none !important;
+        transform: none !important;
+    }
+
+    /* Flatten gradient circles for print */
+    #courseinfo-content .ci-icon,
+    #courseinfo-generated .ci-icon {
+        background: #e2e8f0 !important;
+        box-shadow: none !important;
+    }
+
+    #courseinfo-content .ci-icon .fa,
+    #courseinfo-content .ci-icon i,
+    #courseinfo-generated .ci-icon .fa,
+    #courseinfo-generated .ci-icon i {
+        color: #475569 !important;
+    }
+
+    /* Keep accent bars in print */
+    #courseinfo-content .ci-card,
+    #courseinfo-generated .ci-card {
+        box-shadow: none !important;
+        transform: none !important;
+        border-left-width: 2px !important;
+    }
+}
