@@ -15,30 +15,27 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod_courseinfo file.
+ * Privacy Subsystem implementation for mod_courseinfo.
  *
  * @package    mod_courseinfo
  * @copyright  2026 LMS-Labs
  * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+namespace mod_courseinfo\privacy;
 
-class restore_courseinfo_activity_structure_step extends restore_activity_structure_step {
-    protected function define_structure() {
-        $paths = array();
-        $paths[] = new restore_path_element('courseinfo', '/activity/courseinfo');
-        return $paths;
-    }
-
-    protected function process_courseinfo($data) {
-        global $DB;
-        $data = (object)$data;
-        $oldid = $data->id;
-        $data->course = $this->get_courseid();
-        $data->timecreated = time();
-        $data->timemodified = time();
-        $newitemid = $DB->insert_record('courseinfo', $data);
-        $this->apply_activity_instance($newitemid);
+/**
+ * Privacy Subsystem for mod_courseinfo implementing null_provider.
+ *
+ * @package mod_courseinfo
+ */
+class provider implements \core_privacy\local\metadata\null_provider {
+    /**
+     * Returns a reason why no user data is stored.
+     *
+     * @return string
+     */
+    public static function get_reason(): string {
+        return 'privacy:metadata';
     }
 }

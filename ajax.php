@@ -1,4 +1,12 @@
 <?php
+/**
+ * mod_courseinfo file.
+ *
+ * @package    mod_courseinfo
+ * @copyright  2026 LMS-Labs
+ * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify

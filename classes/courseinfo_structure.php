@@ -32,9 +32,10 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @package   mod_courseinfo
  * @since     v1.0.38
+ * @copyright  2026 LMS-Labs
+ * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
  */
 class courseinfo_structure {
-
     /**
      * Returns the full audit-locked section and field schema.
      *

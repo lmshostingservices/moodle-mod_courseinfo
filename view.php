@@ -1,4 +1,12 @@
 <?php
+/**
+ * mod_courseinfo file.
+ *
+ * @package    mod_courseinfo
+ * @copyright  2026 LMS-Labs
+ * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -310,13 +318,13 @@ if ($hasContent) {
 
             /* Inline JS for acknowledgement submission */
             echo '<script>
-(function() {
+(function () {
     var btn = document.getElementById("ci-ack-btn");
     var chk = document.getElementById("ci-ack-checkbox");
     var err = document.getElementById("ci-ack-error");
     var box = document.getElementById("ci-ack-box");
     if (!btn || !chk) { return; }
-    btn.addEventListener("click", function() {
+    btn.addEventListener("click", function () {
         if (!chk.checked) {
             err.style.display = "block";
             return;
@@ -327,7 +335,7 @@ if ($hasContent) {
         var xhr = new XMLHttpRequest();
         xhr.open("POST", M.cfg.wwwroot + "/mod/courseinfo/ajax.php", true);
         xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-        xhr.onreadystatechange = function() {
+        xhr.onreadystatechange = function () {
             if (xhr.readyState !== 4) { return; }
             try {
                 var resp = JSON.parse(xhr.responseText);
