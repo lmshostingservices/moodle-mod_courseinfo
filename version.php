@@ -505,8 +505,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026072300;
+$plugin->version   = 2026081500;
 $plugin->requires  = 2022041900;
 $plugin->component = 'mod_courseinfo';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.0.52';
+$plugin->release   = '1.0.53'; // FIX-13DIGIT-SAVEPOINT-REBASE: release rebuilt from repo db/upgrade.php with all gates/savepoints on 10-digit values <= $plugin->version; the previously served ZIP still carried legacy 13-digit savepoints that would silently re-strand rebased sites on the next upgrade. No schema/PHP-logic/JS changes. 

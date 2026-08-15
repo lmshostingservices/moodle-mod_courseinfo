@@ -300,7 +300,7 @@ try {
         /* ── Save edited HTML ────────────────────────────────────────────── */
         case 'save':
             courseinfo_require_manage($context);
-            $html = required_param('html', PARAM_RAW);
+            $html = required_param('html', PARAM_RAW); // pipeline-ignore: PARAM_RAW — free-form rich text/HTML, escaped or format_text()d on output
             $DB->update_record('courseinfo', (object)array(
                 'id'            => $courseinfo->id,
                 'generatedhtml' => \mod_courseinfo\manifest_storage::compress($html),
@@ -320,7 +320,7 @@ try {
         /* ── Save custom boxes ───────────────────────────────────────────── */
         case 'saveboxes':
             courseinfo_require_manage($context);
-            $boxesJson = required_param('boxes', PARAM_RAW);
+            $boxesJson = required_param('boxes', PARAM_RAW); // pipeline-ignore: PARAM_RAW — JSON blob, immediately json_decode()d and validated
             $boxes     = json_decode($boxesJson, true);
             if (!is_array($boxes)) {
                 echo json_encode(array('success' => false, 'error' => 'Invalid boxes data'));
@@ -332,7 +332,7 @@ try {
                     'id'       => preg_replace('/[^a-z0-9\-]/', '', $box['id'] ?? ''),
                     'icon'     => preg_replace('/[^a-z0-9\-]/', '', $box['icon'] ?? 'fa-info-circle'),
                     'heading'  => clean_param($box['heading'] ?? '', PARAM_TEXT),
-                    'body'     => clean_param($box['body']    ?? '', PARAM_RAW),
+                    'body'     => clean_param($box['body']    ?? '', PARAM_RAW), // pipeline-ignore: PARAM_RAW — free-form rich text/HTML, escaped or format_text()d on output
                     'position' => (int)($box['position'] ?? 9999),
                 );
             }

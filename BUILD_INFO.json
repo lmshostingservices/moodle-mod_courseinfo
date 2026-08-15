@@ -1,8 +1,0 @@
-{
-  "component": "mod_courseinfo",
-  "version": "1.0.48",
-  "numeric_version": "2026050100048",
-  "build_id": "ci48_stat_tile_label_value_order_fix",
-  "build_timestamp": "2026-05-01T00:00:00.000Z",
-  "verification": "label_pinned_order_1_value_pinned_order_2_visual_stack_correct_regardless_of_dom_order"
-}
