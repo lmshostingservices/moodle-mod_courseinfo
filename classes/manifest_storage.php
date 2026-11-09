@@ -32,10 +32,16 @@ namespace mod_courseinfo;
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Manifest storage.
+ */
 class manifest_storage {
     const THRESHOLD = 524288;
     const PREFIX    = 'gz:';
 
+    /**
+     * Compress.
+     */
     public static function compress(?string $data): ?string {
         if ($data === null || $data === '') {
             return $data;
@@ -52,6 +58,9 @@ class manifest_storage {
         return $result;
     }
 
+    /**
+     * Decompress.
+     */
     public static function decompress(?string $data): ?string {
         if ($data === null || $data === '') {
             return $data;

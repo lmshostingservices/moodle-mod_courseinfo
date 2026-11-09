@@ -1,12 +1,4 @@
 <?php
-/**
- * mod_courseinfo file.
- *
- * @package    mod_courseinfo
- * @copyright  2026 LMS-Labs
- * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
- */
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -22,15 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * mod_courseinfo file.
+ *
+ * @package    mod_courseinfo
+ * @copyright  2026 LMS-Labs
+ * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
+
 require_once('../../config.php');
 require_login();
 
 $id = required_param('id', PARAM_INT);
-$course = $DB->get_record('course', array('id' => $id), '*', MUST_EXIST);
+$course = $DB->get_record('course', ['id' => $id], '*', MUST_EXIST);
 
 require_course_login($course);
 
-$PAGE->set_url('/mod/courseinfo/index.php', array('id' => $id));
+$PAGE->set_url('/mod/courseinfo/index.php', ['id' => $id]);
 $PAGE->set_title(format_string($course->fullname));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_pagelayout('incourse');
@@ -40,16 +40,16 @@ echo $OUTPUT->heading(get_string('modulenameplural', 'courseinfo'));
 
 $courseinfos = get_all_instances_in_course('courseinfo', $course);
 if (empty($courseinfos)) {
-    notice(get_string('noactivities', 'courseinfo'), new moodle_url('/course/view.php', array('id' => $course->id)));
+    notice(get_string('noactivities', 'courseinfo'), new moodle_url('/course/view.php', ['id' => $course->id]));
 }
 
 $table = new html_table();
-$table->head = array(get_string('name'), get_string('unitcode', 'courseinfo'), get_string('nominalhours', 'courseinfo'));
-$table->align = array('left', 'left', 'center');
+$table->head = [get_string('name'), get_string('unitcode', 'courseinfo'), get_string('nominalhours', 'courseinfo')];
+$table->align = ['left', 'left', 'center'];
 
 foreach ($courseinfos as $ci) {
-    $link = html_writer::link(new moodle_url('/mod/courseinfo/view.php', array('id' => $ci->coursemodule)), format_string($ci->name));
-    $table->data[] = array($link, $ci->unitcode ?? '-', $ci->nominalhours ?? '-');
+    $link = html_writer::link(new moodle_url('/mod/courseinfo/view.php', ['id' => $ci->coursemodule]), format_string($ci->name));
+    $table->data[] = [$link, $ci->unitcode ?? '-', $ci->nominalhours ?? '-'];
 }
 
 echo html_writer::table($table);

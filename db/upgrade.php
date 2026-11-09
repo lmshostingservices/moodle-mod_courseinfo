@@ -25,9 +25,26 @@
 defined('MOODLE_INTERNAL') || die();
 
 
+/**
+ * Xmldb courseinfo upgrade.
+ */
 function xmldb_courseinfo_upgrade($oldversion) {
+    global $DB;
     if ($oldversion < 2026072300) {
         upgrade_mod_savepoint(true, 2026072300, 'courseinfo');
+    }
+    if ($oldversion < 2026110501) {
+        $dbman = $DB->get_manager();
+        $table = new xmldb_table('courseinfo');
+        $framework = new xmldb_field('framework', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null, 'vet', 'enableasqa');
+        if (!$dbman->field_exists($table, $framework)) {
+            $dbman->add_field($table, $framework);
+        }
+        $frameworkdata = new xmldb_field('frameworkdata', XMLDB_TYPE_TEXT, null, null, null, null, null, 'framework');
+        if (!$dbman->field_exists($table, $frameworkdata)) {
+            $dbman->add_field($table, $frameworkdata);
+        }
+        upgrade_mod_savepoint(true, 2026110501, 'courseinfo');
     }
     return true;
 }

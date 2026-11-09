@@ -1,12 +1,4 @@
 <?php
-/**
- * mod_courseinfo file.
- *
- * @package    mod_courseinfo
- * @copyright  2026 LMS-Labs
- * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
- */
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -22,15 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * mod_courseinfo file.
+ *
+ * @package    mod_courseinfo
+ * @copyright  2026 LMS-Labs
+ * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
+
 namespace mod_courseinfo;
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Volume calculator.
+ */
 class volume_calculator {
     protected $nominalhours;
     protected $activities;
 
-    protected static $TYPE_CATEGORIES = array(
+    protected static $type_categories = [
         'contentcreator'      => 'contentcreator',
         'aiactivities'        => 'aiactivities',
         'essaymaker'          => 'essaymaker',
@@ -42,15 +45,15 @@ class volume_calculator {
         'resource'            => 'other',
         'videoactivity'       => 'other',
         'other'               => 'other',
-    );
+    ];
 
     /* Canonical display order for all category keys. */
-    protected static $CATEGORY_ORDER = array(
+    protected static $category_order = [
         'contentcreator', 'aiactivities', 'essaymaker',
         'knowledgecheck', 'assignment', 'practicalassessment', 'other',
-    );
+    ];
 
-    protected static $CATEGORY_LABELS = array(
+    protected static $category_labels = [
         'contentcreator'      => 'AI Content Creator',
         'aiactivities'        => 'AI Learning Activities',
         'essaymaker'          => 'AI Essay Maker',
@@ -58,34 +61,40 @@ class volume_calculator {
         'assignment'          => 'Assignments',
         'practicalassessment' => 'Practical Assessments',
         'other'               => 'Other Activities',
-    );
+    ];
 
+    /**
+     * Construct.
+     */
     public function __construct($nominalhours, $activities) {
         $this->nominalhours = max(1, (int)$nominalhours);
         $this->activities   = $activities;
     }
 
+    /**
+     * Calculate.
+     */
     public function calculate() {
 
         /* ── Initialise flat breakdown (global category totals) ──────────── */
-        $breakdown = array();
-        foreach (self::$CATEGORY_ORDER as $cat) {
-            $breakdown[$cat] = array(
-                'label'   => self::$CATEGORY_LABELS[$cat],
+        $breakdown = [];
+        foreach (self::$category_order as $cat) {
+            $breakdown[$cat] = [
+                'label'   => self::$category_labels[$cat],
                 'minutes' => 0,
                 'hours'   => 0,
                 'count'   => 0,
-            );
+            ];
         }
 
         /* ── Per-section data keyed by section_num ───────────────────────── */
-        $sectionData = array();
+        $sectiondata = [];
 
-        $totalMinutes = 0;
+        $totalminutes = 0;
 
         foreach ($this->activities as $activity) {
             $type     = $activity['type'] ?? 'other';
-            $category = self::$TYPE_CATEGORIES[$type] ?? 'other';
+            $category = self::$type_categories[$type] ?? 'other';
             $minutes  = (int)($activity['estimated_minutes'] ?? 15);
             $snum     = (int)($activity['section_num'] ?? 0);
             $sname    = $activity['section_name'] ?? 'General';
@@ -93,31 +102,31 @@ class volume_calculator {
             /* Flat global breakdown */
             $breakdown[$category]['minutes'] += $minutes;
             $breakdown[$category]['count']++;
-            $totalMinutes += $minutes;
+            $totalminutes += $minutes;
 
             /* Per-section breakdown — initialise section entry if needed */
-            if (!isset($sectionData[$snum])) {
-                $sectionData[$snum] = array(
+            if (!isset($sectiondata[$snum])) {
+                $sectiondata[$snum] = [
                     'num'           => $snum,
                     'name'          => $sname,
                     'total_minutes' => 0,
                     'total_hours'   => 0,
-                    'categories'    => array(),
-                );
+                    'categories'    => [],
+                ];
                 /* Pre-populate categories in canonical order so JSON preserves it */
-                foreach (self::$CATEGORY_ORDER as $cat) {
-                    $sectionData[$snum]['categories'][$cat] = array(
-                        'label'   => self::$CATEGORY_LABELS[$cat],
+                foreach (self::$category_order as $cat) {
+                    $sectiondata[$snum]['categories'][$cat] = [
+                        'label'   => self::$category_labels[$cat],
                         'minutes' => 0,
                         'hours'   => 0,
                         'count'   => 0,
-                    );
+                    ];
                 }
             }
 
-            $sectionData[$snum]['categories'][$category]['minutes'] += $minutes;
-            $sectionData[$snum]['categories'][$category]['count']++;
-            $sectionData[$snum]['total_minutes']                    += $minutes;
+            $sectiondata[$snum]['categories'][$category]['minutes'] += $minutes;
+            $sectiondata[$snum]['categories'][$category]['count']++;
+            $sectiondata[$snum]['total_minutes']                    += $minutes;
         }
 
         /* ── Compute hours ───────────────────────────────────────────────── */
@@ -126,8 +135,8 @@ class volume_calculator {
         }
         unset($data);
 
-        ksort($sectionData); // chronological order by section number
-        foreach ($sectionData as &$sec) {
+        ksort($sectiondata); // chronological order by section number
+        foreach ($sectiondata as &$sec) {
             $sec['total_hours'] = round($sec['total_minutes'] / 60, 1);
             foreach ($sec['categories'] as &$cat) {
                 $cat['hours'] = round($cat['minutes'] / 60, 1);
@@ -136,33 +145,37 @@ class volume_calculator {
         }
         unset($sec);
 
-        $sectionsBreakdown = array_values($sectionData);
+        $sectionsbreakdown = array_values($sectiondata);
 
         /* ── Compliance calculation ──────────────────────────────────────── */
-        $nominalMinutes = $this->nominalhours * 60;
-        $totalHours     = round($totalMinutes / 60, 1);
-        $gap            = round(($nominalMinutes - $totalMinutes) / 60, 1);
+        $nominalminutes = $this->nominalhours * 60;
+        $totalhours     = round($totalminutes / 60, 1);
+        $gap            = round(($nominalminutes - $totalminutes) / 60, 1);
 
-        return array(
+        return [
             'nominal_hours'      => $this->nominalhours,
-            'nominal_minutes'    => $nominalMinutes,
-            'total_minutes'      => $totalMinutes,
-            'total_hours'        => $totalHours,
-            'compliant'          => $totalMinutes >= $nominalMinutes,
+            'nominal_minutes'    => $nominalminutes,
+            'total_minutes'      => $totalminutes,
+            'total_hours'        => $totalhours,
+            'compliant'          => $totalminutes >= $nominalminutes,
             'gap_hours'          => max(0, $gap),
-            'breakdown'          => $breakdown,          // flat totals (kept for backward compat)
-            'sections_breakdown' => $sectionsBreakdown,  // per-section, per-category (v1.0.19+)
+            'breakdown'          => $breakdown, // flat totals (kept for backward compat)
+            'sections_breakdown' => $sectionsbreakdown, // per-section, per-category (v1.0.19+)
             'activities'         => $this->activities,
-        );
+        ];
     }
 
+    /**
+     * Lookup nominal hours.
+     */
     public static function lookup_nominal_hours($unitcode) {
         global $DB;
         try {
             if ($DB->get_manager()->table_exists('rtocompliance_units')) {
-                $unit = $DB->get_record_select('rtocompliance_units',
+                $unit = $DB->get_record_select(
+                    'rtocompliance_units',
                     $DB->sql_like('unitcode', ':code', false),
-                    array('code' => $unitcode),
+                    ['code' => $unitcode],
                     'nominalhours'
                 );
                 if ($unit && !empty($unit->nominalhours)) {
@@ -171,9 +184,10 @@ class volume_calculator {
             }
 
             if ($DB->get_manager()->table_exists('rtocompliance_tas_units')) {
-                $unit = $DB->get_record_select('rtocompliance_tas_units',
+                $unit = $DB->get_record_select(
+                    'rtocompliance_tas_units',
                     $DB->sql_like('unitcode', ':code', false),
-                    array('code' => $unitcode),
+                    ['code' => $unitcode],
                     'nominalhours'
                 );
                 if ($unit && !empty($unit->nominalhours)) {

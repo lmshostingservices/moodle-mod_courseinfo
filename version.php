@@ -98,7 +98,7 @@
  *     above the collapse so learners always see the headline; the full
  *     legalistic disclosure remains one click away for audit/print.
  *   FIX 7 — VISUAL TIGHTEN: Card accent bar reduced from 4px → 2px (also in
- *     @media print). Icon hover softened: removed the 5° rotate, kept only
+ * @media print). Icon hover softened: removed the 5° rotate, kept only
  *     the subtle 1.06 scale. Card hover shadow softened from 0 8px 22px
  *     rgba(0,0,0,0.13) to 0 4px 14px rgba(0,0,0,0.08).
  *   PHP CHANGES: None (no schema, no .php). System-prompt and CSS only.
@@ -505,8 +505,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026101500;
+$plugin->version   = 2026110901;
 $plugin->requires  = 2022041900;
 $plugin->component = 'mod_courseinfo';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.0.54'; // FIX-13DIGIT-SAVEPOINT-REBASE: release rebuilt from repo db/upgrade.php with all gates/savepoints on 10-digit values <= $plugin->version; the previously served ZIP still carried legacy 13-digit savepoints that would silently re-strand rebased sites on the next upgrade. No schema/PHP-logic/JS changes. 
+$plugin->release   = '1.0.59';

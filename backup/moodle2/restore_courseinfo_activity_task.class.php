@@ -26,19 +26,34 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/mod/courseinfo/backup/moodle2/restore_courseinfo_stepslib.php');
 
+/**
+ * Restore courseinfo activity task.
+ */
 class restore_courseinfo_activity_task extends restore_activity_task {
+    /**
+     * Define my settings.
+     */
     protected function define_my_settings() {
     }
 
+    /**
+     * Define my steps.
+     */
     protected function define_my_steps() {
         $this->add_step(new restore_courseinfo_activity_structure_step('courseinfo_structure', 'courseinfo.xml'));
     }
 
+    /**
+     * Define decode contents.
+     */
     public static function define_decode_contents() {
-        return array();
+        return [];
     }
 
+    /**
+     * Define decode rules.
+     */
     public static function define_decode_rules() {
-        return array();
+        return [];
     }
 }

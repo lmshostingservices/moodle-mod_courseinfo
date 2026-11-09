@@ -24,13 +24,24 @@
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Restore courseinfo activity structure step.
+ */
 class restore_courseinfo_activity_structure_step extends restore_activity_structure_step {
+    /**
+     * Define structure.
+     */
     protected function define_structure() {
-        $paths = array();
+        $paths = [];
         $paths[] = new restore_path_element('courseinfo', '/activity/courseinfo');
-        return $paths;
+        // The activity wrapper must be prepared too, or the activity context is never mapped
+        // and restoring calendar events, files or a whole course fails with unknown_context_mapping.
+        return $this->prepare_activity_structure($paths);
     }
 
+    /**
+     * Process courseinfo.
+     */
     protected function process_courseinfo($data) {
         global $DB;
         $data = (object)$data;

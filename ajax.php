@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * mod_courseinfo file.
  *
@@ -6,13 +21,6 @@
  * @copyright  2026 LMS-Labs
  * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
  */
-
-// This file is part of Moodle - http://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
 
 define('AJAX_SCRIPT', true);
 
@@ -25,12 +33,15 @@ header('Content-Type: application/json; charset=utf-8');
 
 /* ── Internal helpers (not duplicated in lib.php) ────────────────────────── */
 
+/**
+ * Courseinfo get api config.
+ */
 function courseinfo_get_api_config() {
     global $DB;
-    $config = array('siteid' => '', 'apikey' => '', 'apiurl' => 'https://lms-labs.com');
+    $config = ['siteid' => '', 'apikey' => '', 'apiurl' => 'https://lms-labs.com'];
     try {
         if ($DB->get_manager()->table_exists('local_aiconfig')) {
-            $aiconfig = $DB->get_record('local_aiconfig', array('id' => 1));
+            $aiconfig = $DB->get_record('local_aiconfig', ['id' => 1]);
             if ($aiconfig) {
                 $config['siteid'] = $aiconfig->siteid ?? '';
                 $config['apikey'] = $aiconfig->apikey ?? '';
@@ -39,7 +50,9 @@ function courseinfo_get_api_config() {
                 }
             }
         }
-    } catch (\Exception $e) { /* fallback */ }
+    } catch (\Exception $e) {
+        /* fallback */
+    }
     if (empty($config['siteid'])) {
         $config['siteid'] = get_config('local_aiconfig', 'siteid') ?: '';
         $config['apikey'] = get_config('local_aiconfig', 'apikey') ?: '';
@@ -47,60 +60,62 @@ function courseinfo_get_api_config() {
     return $config;
 }
 
+/**
+ * Courseinfo api call.
+ */
 function courseinfo_api_call($url, $data, $config) {
     $curl = new \curl();
-    $curl->setopt(array('CURLOPT_TIMEOUT' => 120, 'CURLOPT_CONNECTTIMEOUT' => 15));
-    $headers  = array('Content-Type: application/json', 'Accept: application/json');
-    $postdata = json_encode(array_merge($data, array('siteId' => $config['siteid'], 'apiKey' => $config['apikey'])));
-    $response = $curl->post($url, $postdata, array('CURLOPT_HTTPHEADER' => $headers));
+    $curl->setopt(['CURLOPT_TIMEOUT' => 120, 'CURLOPT_CONNECTTIMEOUT' => 15]);
+    $headers  = ['Content-Type: application/json', 'Accept: application/json'];
+    $postdata = json_encode(array_merge($data, ['siteId' => $config['siteid'], 'apiKey' => $config['apikey']]));
+    $response = $curl->post($url, $postdata, ['CURLOPT_HTTPHEADER' => $headers]);
     $httpcode = $curl->get_info()['http_code'] ?? 0;
     if ($httpcode === 0) {
-        return array('success' => false, 'error' => "API error: 0 (curl " . $curl->get_errno() . ")");
+        return ['success' => false, 'error' => "API error: 0 (curl " . $curl->get_errno() . ")"];
     }
     if ($httpcode >= 400) {
         $decoded = json_decode($response, true);
-        return array('success' => false, 'error' => "API error: " . ($decoded['error'] ?? $decoded['message'] ?? "HTTP $httpcode"));
+        return ['success' => false, 'error' => "API error: " . ($decoded['error'] ?? $decoded['message'] ?? "HTTP $httpcode")];
     }
     $decoded = json_decode($response, true);
-    return $decoded ?: array('success' => false, 'error' => 'Invalid JSON response from API');
+    return $decoded ?: ['success' => false, 'error' => 'Invalid JSON response from API'];
 }
 
 /* ── Main handler — everything inside try/catch so errors return JSON ─────── */
 
 try {
     $action = required_param('action', PARAM_ALPHANUMEXT);
-    $cmid   = required_param('cmid',   PARAM_INT);
+    $cmid   = required_param('cmid', PARAM_INT);
 
     $cm         = get_coursemodule_from_id('courseinfo', $cmid, 0, false, MUST_EXIST);
-    $course     = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-    $courseinfo = $DB->get_record('courseinfo', array('id' => $cm->instance), '*', MUST_EXIST);
+    $course     = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+    $courseinfo = $DB->get_record('courseinfo', ['id' => $cm->instance], '*', MUST_EXIST);
     $context    = context_module::instance($cm->id);
 
     require_login($course, true, $cm);
     require_sesskey();
 
     switch ($action) {
-
         /* ── Scan activities ─────────────────────────────────────────────── */
         case 'scan':
             courseinfo_require_manage($context);
             \core\session\manager::write_close();
             $scanner    = new \mod_courseinfo\scanner($course->id);
-            $scanResult = $scanner->scan_complete();
-            $enableVol  = !empty($courseinfo->enablevol);
-            $volResult  = null;
-            if ($enableVol && !empty($courseinfo->nominalhours)) {
-                $calculator = new \mod_courseinfo\volume_calculator($courseinfo->nominalhours, $scanResult['activities']);
-                $volResult  = $calculator->calculate();
-                $scanResult['volume'] = $volResult;
+            $scanresult = $scanner->scan_complete();
+            $enablevol  = !empty($courseinfo->enablevol);
+            $volresult  = null;
+            if ($enablevol && !empty($courseinfo->nominalhours)) {
+                $calculator = new \mod_courseinfo\volume_calculator($courseinfo->nominalhours, $scanresult['activities']);
+                $volresult  = $calculator->calculate();
+                $scanresult['volume'] = $volresult;
             }
-            $DB->update_record('courseinfo', (object)array(
+            $DB->update_record('courseinfo', (object)[
                 'id'             => $courseinfo->id,
-                'scanneddata'    => \mod_courseinfo\manifest_storage::compress(json_encode($scanResult)),
-                'volumebreakdown'=> $volResult ? \mod_courseinfo\manifest_storage::compress(json_encode($volResult)) : null,
+                'scanneddata'    => \mod_courseinfo\manifest_storage::compress(json_encode($scanresult)),
+                'volumebreakdown' => $volresult ? \mod_courseinfo\manifest_storage::compress(json_encode($volresult)) : null,
                 'timemodified'   => time(),
-            ));
-            echo json_encode(array('success' => true, 'data' => $scanResult));
+            ]);
+            echo json_encode(['success' => true, 'data' => $scanresult]);
             break;
 
         /* ── Generate course information ─────────────────────────────────── */
@@ -122,51 +137,53 @@ try {
                 $secondarycolour = $primarycolour;
             }
 
-            $enableVol   = !empty($courseinfo->enablevol);
-            $enableAsqa  = isset($courseinfo->enableasqa) ? !empty($courseinfo->enableasqa) : true;
-            $scannedData = null;
+            $enablevol   = !empty($courseinfo->enablevol);
+            $enableasqa  = isset($courseinfo->enableasqa) ? !empty($courseinfo->enableasqa) : true;
+            $scanneddata = null;
             if (!empty($courseinfo->scanneddata)) {
-                $scannedData = json_decode(\mod_courseinfo\manifest_storage::decompress($courseinfo->scanneddata), true);
+                $scanneddata = json_decode(\mod_courseinfo\manifest_storage::decompress($courseinfo->scanneddata), true);
             }
-            if (!$scannedData) {
+            if (!$scanneddata) {
                 $scanner     = new \mod_courseinfo\scanner($course->id);
-                $scannedData = $scanner->scan_complete();
-                if ($enableVol && !empty($courseinfo->nominalhours)) {
-                    $calculator = new \mod_courseinfo\volume_calculator($courseinfo->nominalhours, $scannedData['activities']);
-                    $scannedData['volume'] = $calculator->calculate();
+                $scanneddata = $scanner->scan_complete();
+                if ($enablevol && !empty($courseinfo->nominalhours)) {
+                    $calculator = new \mod_courseinfo\volume_calculator($courseinfo->nominalhours, $scanneddata['activities']);
+                    $scanneddata['volume'] = $calculator->calculate();
                 }
             }
 
-            if (empty($scannedData['activities'])) {
-                echo json_encode(array('success' => false, 'error' => get_string('noactivities', 'courseinfo')));
+            if (empty($scanneddata['activities'])) {
+                echo json_encode(['success' => false, 'error' => get_string('noactivities', 'courseinfo')]);
                 break;
             }
 
             $config = courseinfo_get_api_config();
             if (empty($config['siteid']) || empty($config['apikey'])) {
-                echo json_encode(array('success' => false, 'error' => get_string('configerror', 'courseinfo')));
+                echo json_encode(['success' => false, 'error' => get_string('configerror', 'courseinfo')]);
                 break;
             }
 
             $apiurl  = rtrim($config['apiurl'], '/') . '/api/moodle/course-info/generate';
-            $apiData = array(
+            $apidata = [
                 'courseName'      => $course->fullname,
                 'courseShortName' => $course->shortname,
                 'courseSummary'   => strip_tags($course->summary),
-                'unitCode'        => $enableVol ? ($courseinfo->unitcode ?: '') : '',
-                'unitTitle'       => $enableVol ? ($courseinfo->unittitle ?: '') : '',
-                'nominalHours'    => $enableVol ? (int)($courseinfo->nominalhours ?: 0) : 0,
-                'enableVol'       => $enableVol,
-                'activities'      => $scannedData['activities'],
-                'volume'          => $enableVol ? ($scannedData['volume'] ?? null) : null,
-                'activitySummary' => $scannedData['summary'] ?? null,
-                'environment'     => $scannedData['environment'] ?? null,
+                'framework'       => $courseinfo->framework ?? 'vet',
+                'frameworkdata'   => !empty($courseinfo->frameworkdata) ? (json_decode($courseinfo->frameworkdata, true) ?: []) : [],
+                'unitCode'        => $enablevol ? ($courseinfo->unitcode ?: '') : '',
+                'unitTitle'       => $enablevol ? ($courseinfo->unittitle ?: '') : '',
+                'nominalHours'    => $enablevol ? (int)($courseinfo->nominalhours ?: 0) : 0,
+                'enableVol'       => $enablevol,
+                'activities'      => $scanneddata['activities'],
+                'volume'          => $enablevol ? ($scanneddata['volume'] ?? null) : null,
+                'activitySummary' => $scanneddata['summary'] ?? null,
+                'environment'     => $scanneddata['environment'] ?? null,
                 'primaryColour'   => $primarycolour,
                 'secondaryColour' => $secondarycolour,
-                'enableAsqa'      => $enableAsqa,
-            );
+                'enableAsqa'      => $enableasqa,
+            ];
 
-            $result = courseinfo_api_call($apiurl, $apiData, $config);
+            $result = courseinfo_api_call($apiurl, $apidata, $config);
 
             if (!empty($result['success']) || !empty($result['html'])) {
                 $html     = $result['html'] ?? '';
@@ -174,13 +191,13 @@ try {
                 /* BUG-CI-HTMLSTRIP: Strip document-level tags from AI-generated HTML.
                    The server API already strips these, but this is a belt-and-suspenders
                    safety net for any API version that doesn't sanitize. */
-                $html = preg_replace('/<!DOCTYPE[^>]*>/i',    '', $html);
-                $html = preg_replace('/<html[^>]*>/i',        '', $html);
-                $html = preg_replace('/<\/html>/i',           '', $html);
+                $html = preg_replace('/<!DOCTYPE[^>]*>/i', '', $html);
+                $html = preg_replace('/<html[^>]*>/i', '', $html);
+                $html = preg_replace('/<\/html>/i', '', $html);
                 $html = preg_replace('/<head[^>]*>.*?<\/head>/si', '', $html);
-                $html = preg_replace('/<body[^>]*>/i',        '', $html);
-                $html = preg_replace('/<\/body>/i',           '', $html);
-                $html = preg_replace('/<meta[^>]*/i',         '', $html);
+                $html = preg_replace('/<body[^>]*>/i', '', $html);
+                $html = preg_replace('/<\/body>/i', '', $html);
+                $html = preg_replace('/<meta[^>]*/i', '', $html);
                 /* BUG-CI-MAXWIDTH: Strip max-width:900px centering that makes content look narrow */
                 $html = preg_replace('/max-width\s*:\s*900px\s*;?\s*margin\s*:\s*0\s+auto/i', 'width:100%', $html);
                 $html = preg_replace('/margin\s*:\s*0\s+auto\s*;?\s*max-width\s*:\s*900px/i', 'width:100%', $html);
@@ -199,26 +216,26 @@ try {
 
                 // Save structured JSON (audit schema) to generatedjson column.
                 // Falls back to legacy data shape when structured is absent.
-                $jsonToSave = !empty($structured) ? $structured : ($result['data'] ?? $result);
+                $jsontosave = !empty($structured) ? $structured : ($result['data'] ?? $result);
 
-                $DB->update_record('courseinfo', (object)array(
+                $DB->update_record('courseinfo', (object)[
                     'id'              => $courseinfo->id,
                     'generatedhtml'   => \mod_courseinfo\manifest_storage::compress($html),
-                    'generatedjson'   => \mod_courseinfo\manifest_storage::compress(json_encode($jsonToSave)),
-                    'scanneddata'     => \mod_courseinfo\manifest_storage::compress(json_encode($scannedData)),
-                    'volumebreakdown' => \mod_courseinfo\manifest_storage::compress(json_encode($scannedData['volume'] ?? null)),
+                    'generatedjson'   => \mod_courseinfo\manifest_storage::compress(json_encode($jsontosave)),
+                    'scanneddata'     => \mod_courseinfo\manifest_storage::compress(json_encode($scanneddata)),
+                    'volumebreakdown' => \mod_courseinfo\manifest_storage::compress(json_encode($scanneddata['volume'] ?? null)),
                     'lastgenerated'   => time(),
                     'timemodified'    => time(),
-                ));
-                echo json_encode(array(
+                ]);
+                echo json_encode([
                     'success'    => true,
                     'html'       => $html,
                     'structured' => $structured,
                     'compliance' => $compliance,
-                    'volume'     => $scannedData['volume'] ?? null,
-                ));
+                    'volume'     => $scanneddata['volume'] ?? null,
+                ]);
             } else {
-                echo json_encode(array('success' => false, 'error' => $result['error'] ?? 'Unknown error'));
+                echo json_encode(['success' => false, 'error' => $result['error'] ?? 'Unknown error']);
             }
             break;
 
@@ -229,70 +246,78 @@ try {
 
             $config = courseinfo_get_api_config();
             if (empty($config['siteid']) || empty($config['apikey'])) {
-                echo json_encode(array('success' => false, 'error' => get_string('configerror', 'courseinfo')));
+                echo json_encode(['success' => false, 'error' => get_string('configerror', 'courseinfo')]);
                 break;
             }
 
             // Build the same payload as case 'generate' but call the /start endpoint.
-            $enableVol  = !empty($courseinfo->enablevol);
-            $scannedData = null;
+            $enablevol  = !empty($courseinfo->enablevol);
+            $scanneddata = null;
             if (!empty($courseinfo->scanneddata)) {
-                $scannedData = json_decode(\mod_courseinfo\manifest_storage::decompress($courseinfo->scanneddata), true);
+                $scanneddata = json_decode(\mod_courseinfo\manifest_storage::decompress($courseinfo->scanneddata), true);
             }
-            if (!$scannedData) {
+            if (!$scanneddata) {
                 $scanner     = new \mod_courseinfo\scanner($course->id);
-                $scannedData = $scanner->scan_complete();
-                if ($enableVol && !empty($courseinfo->nominalhours)) {
-                    $calculator = new \mod_courseinfo\volume_calculator($courseinfo->nominalhours, $scannedData['activities']);
-                    $scannedData['volume'] = $calculator->calculate();
+                $scanneddata = $scanner->scan_complete();
+                if ($enablevol && !empty($courseinfo->nominalhours)) {
+                    $calculator = new \mod_courseinfo\volume_calculator($courseinfo->nominalhours, $scanneddata['activities']);
+                    $scanneddata['volume'] = $calculator->calculate();
                 }
             }
-            if (empty($scannedData['activities'])) {
-                echo json_encode(array('success' => false, 'error' => get_string('noactivities', 'courseinfo')));
+            if (empty($scanneddata['activities'])) {
+                echo json_encode(['success' => false, 'error' => get_string('noactivities', 'courseinfo')]);
                 break;
             }
 
             $primarycolour   = optional_param('primaryColour', '', PARAM_TEXT);
             $secondarycolour = optional_param('secondaryColour', '', PARAM_TEXT);
             if (empty($primarycolour)) {
-                try { $themeconfig = \theme_config::load($CFG->theme); $primarycolour = $themeconfig->settings->brandcolor ?? '#1a73e8'; }
-                catch (\Exception $e) { $primarycolour = '#1a73e8'; }
+                try {
+                    $themeconfig = \theme_config::load($CFG->theme);
+                    $primarycolour = $themeconfig->settings->brandcolor ?? '#1a73e8';
+                } catch (\Exception $e) {
+                    $primarycolour = '#1a73e8';
+                }
             }
-            if (empty($secondarycolour)) { $secondarycolour = $primarycolour; }
+            if (empty($secondarycolour)) {
+                $secondarycolour = $primarycolour;
+            }
 
-            $apiData = array(
+            $apidata = [
                 'courseName' => $course->fullname, 'courseShortName' => $course->shortname,
                 'courseSummary' => strip_tags($course->summary),
-                'unitCode' => $enableVol ? ($courseinfo->unitcode ?: '') : '',
-                'unitTitle' => $enableVol ? ($courseinfo->unittitle ?: '') : '',
-                'nominalHours' => $enableVol ? (int)($courseinfo->nominalhours ?: 0) : 0,
-                'enableVol' => $enableVol, 'activities' => $scannedData['activities'],
-                'volume' => $enableVol ? ($scannedData['volume'] ?? null) : null,
-                'activitySummary' => $scannedData['summary'] ?? null,
-                'environment' => $scannedData['environment'] ?? null,
+                'framework' => $courseinfo->framework ?? 'vet',
+                'frameworkdata' => !empty($courseinfo->frameworkdata) ? (json_decode($courseinfo->frameworkdata, true) ?: []) : [],
+                'unitCode' => $enablevol ? ($courseinfo->unitcode ?: '') : '',
+                'unitTitle' => $enablevol ? ($courseinfo->unittitle ?: '') : '',
+                'nominalHours' => $enablevol ? (int)($courseinfo->nominalhours ?: 0) : 0,
+                'enableVol' => $enablevol, 'activities' => $scanneddata['activities'],
+                'volume' => $enablevol ? ($scanneddata['volume'] ?? null) : null,
+                'activitySummary' => $scanneddata['summary'] ?? null,
+                'environment' => $scanneddata['environment'] ?? null,
                 'primaryColour' => $primarycolour, 'secondaryColour' => $secondarycolour,
                 'enableAsqa' => isset($courseinfo->enableasqa) ? !empty($courseinfo->enableasqa) : true,
-            );
+            ];
 
-            $startUrl = rtrim($config['apiurl'], '/') . '/api/moodle/course-info/generate/start';
-            $result   = courseinfo_api_call($startUrl, $apiData, $config);
+            $starturl = rtrim($config['apiurl'], '/') . '/api/moodle/course-info/generate/start';
+            $result   = courseinfo_api_call($starturl, $apidata, $config);
 
             if (empty($result['ok']) || empty($result['jobId'])) {
-                echo json_encode(array('success' => false, 'error' => $result['error'] ?? 'Failed to start generation job'));
+                echo json_encode(['success' => false, 'error' => $result['error'] ?? 'Failed to start generation job']);
                 break;
             }
-            echo json_encode(array('success' => true, 'jobId' => $result['jobId'], 'async' => true));
+            echo json_encode(['success' => true, 'jobId' => $result['jobId'], 'async' => true]);
             break;
 
         /* ── ASYNC POLL: Check background generation job status ─────────────── */
         case 'poll':
-            $jobId = required_param('jobId', PARAM_ALPHANUMEXT);
+            $jobid = required_param('jobId', PARAM_ALPHANUMEXT);
             \core\session\manager::write_close();
             $config = courseinfo_get_api_config();
-            $pollUrl = rtrim($config['apiurl'], '/') . '/api/jobs/' . urlencode($jobId);
+            $pollurl = rtrim($config['apiurl'], '/') . '/api/jobs/' . urlencode($jobid);
             $curl = new \curl();
-            $curl->setopt(array('CURLOPT_TIMEOUT' => 10, 'CURLOPT_CONNECTTIMEOUT' => 5));
-            $response = $curl->get($pollUrl);
+            $curl->setopt(['CURLOPT_TIMEOUT' => 10, 'CURLOPT_CONNECTTIMEOUT' => 5]);
+            $response = $curl->get($pollurl);
             $result   = json_decode($response, true);
             echo json_encode($result ?: ['ok' => false, 'status' => 'error', 'error' => 'Could not reach job status endpoint']);
             break;
@@ -301,43 +326,43 @@ try {
         case 'save':
             courseinfo_require_manage($context);
             $html = required_param('html', PARAM_RAW); // pipeline-ignore: PARAM_RAW — free-form rich text/HTML, escaped or format_text()d on output
-            $DB->update_record('courseinfo', (object)array(
+            $DB->update_record('courseinfo', (object)[
                 'id'            => $courseinfo->id,
                 'generatedhtml' => \mod_courseinfo\manifest_storage::compress($html),
                 'timemodified'  => time(),
-            ));
-            echo json_encode(array('success' => true));
+            ]);
+            echo json_encode(['success' => true]);
             break;
 
         /* ── Get custom boxes ────────────────────────────────────────────── */
         case 'getboxes':
             require_capability('mod/courseinfo:view', $context);
             $raw   = get_config('mod_courseinfo', 'customboxes_' . $cmid);
-            $boxes = $raw ? json_decode($raw, true) : array();
-            echo json_encode(array('success' => true, 'boxes' => $boxes ?: array()));
+            $boxes = $raw ? json_decode($raw, true) : [];
+            echo json_encode(['success' => true, 'boxes' => $boxes ?: []]);
             break;
 
         /* ── Save custom boxes ───────────────────────────────────────────── */
         case 'saveboxes':
             courseinfo_require_manage($context);
-            $boxesJson = required_param('boxes', PARAM_RAW); // pipeline-ignore: PARAM_RAW — JSON blob, immediately json_decode()d and validated
-            $boxes     = json_decode($boxesJson, true);
+            $boxesjson = required_param('boxes', PARAM_RAW); // pipeline-ignore: PARAM_RAW — JSON blob, immediately json_decode()d and validated
+            $boxes     = json_decode($boxesjson, true);
             if (!is_array($boxes)) {
-                echo json_encode(array('success' => false, 'error' => 'Invalid boxes data'));
+                echo json_encode(['success' => false, 'error' => 'Invalid boxes data']);
                 break;
             }
-            $clean = array();
+            $clean = [];
             foreach ($boxes as $box) {
-                $clean[] = array(
+                $clean[] = [
                     'id'       => preg_replace('/[^a-z0-9\-]/', '', $box['id'] ?? ''),
                     'icon'     => preg_replace('/[^a-z0-9\-]/', '', $box['icon'] ?? 'fa-info-circle'),
                     'heading'  => clean_param($box['heading'] ?? '', PARAM_TEXT),
-                    'body'     => clean_param($box['body']    ?? '', PARAM_RAW), // pipeline-ignore: PARAM_RAW — free-form rich text/HTML, escaped or format_text()d on output
+                    'body'     => clean_param($box['body'] ?? '', PARAM_RAW), // pipeline-ignore: PARAM_RAW — free-form rich text/HTML, escaped or format_text()d on output
                     'position' => (int)($box['position'] ?? 9999),
-                );
+                ];
             }
             set_config('customboxes_' . $cmid, json_encode($clean), 'mod_courseinfo');
-            echo json_encode(array('success' => true));
+            echo json_encode(['success' => true]);
             break;
 
         /* ── Check AI credits ────────────────────────────────────────────── */
@@ -345,29 +370,31 @@ try {
             courseinfo_require_manage($context);
             $config = courseinfo_get_api_config();
             if (empty($config['siteid']) || empty($config['apikey'])) {
-                echo json_encode(array('success' => false, 'error' => 'Plugin not configured: Missing Site ID or API Key. Go to Site admin > Plugins > AI Grader Central Config.'));
+                echo json_encode(['success' => false, 'error' => 'Plugin not configured: Missing Site ID or API Key. Go to Site admin > Plugins > AI Grader Central Config.']);
                 break;
             }
-            $creditsUrl = rtrim($config['apiurl'], '/') . '/api/credits?' . http_build_query(
-                array('siteId' => $config['siteid'], 'apiKey' => $config['apikey']), '', '&'
+            $creditsurl = rtrim($config['apiurl'], '/') . '/api/credits?' . http_build_query(
+                ['siteId' => $config['siteid'], 'apiKey' => $config['apikey']],
+                '',
+                '&'
             );
-            $creditCurl = new \curl();
-            $creditCurl->setopt(array('CURLOPT_TIMEOUT' => 15));
-            $creditResponse = $creditCurl->get($creditsUrl);
-            $creditHttpCode = $creditCurl->get_info()['http_code'] ?? 0;
-            if ($creditHttpCode >= 200 && $creditHttpCode < 300) {
-                $creditResult = json_decode($creditResponse, true);
-                if (isset($creditResult['credits'])) {
-                    echo json_encode(array('success' => true, 'credits' => $creditResult['credits']));
-                } elseif (isset($creditResult['creditsRaw'])) {
-                    echo json_encode(array('success' => true, 'credits' => $creditResult['creditsRaw']));
-                } elseif (isset($creditResult['balance'])) {
-                    echo json_encode(array('success' => true, 'credits' => $creditResult['balance']));
+            $creditcurl = new \curl();
+            $creditcurl->setopt(['CURLOPT_TIMEOUT' => 15]);
+            $creditresponse = $creditcurl->get($creditsurl);
+            $credithttpcode = $creditcurl->get_info()['http_code'] ?? 0;
+            if ($credithttpcode >= 200 && $credithttpcode < 300) {
+                $creditresult = json_decode($creditresponse, true);
+                if (isset($creditresult['credits'])) {
+                    echo json_encode(['success' => true, 'credits' => $creditresult['credits']]);
+                } else if (isset($creditresult['creditsRaw'])) {
+                    echo json_encode(['success' => true, 'credits' => $creditresult['creditsRaw']]);
+                } else if (isset($creditresult['balance'])) {
+                    echo json_encode(['success' => true, 'credits' => $creditresult['balance']]);
                 } else {
-                    echo json_encode(array('success' => true, 'credits' => $creditResult['creditsRemaining'] ?? 0));
+                    echo json_encode(['success' => true, 'credits' => $creditresult['creditsRemaining'] ?? 0]);
                 }
             } else {
-                echo json_encode(array('success' => false, 'error' => 'Failed to fetch credit balance (HTTP ' . $creditHttpCode . ')'));
+                echo json_encode(['success' => false, 'error' => 'Failed to fetch credit balance (HTTP ' . $credithttpcode . ')']);
             }
             break;
 
@@ -375,7 +402,7 @@ try {
         case 'getherocolor':
             require_capability('mod/courseinfo:view', $context);
             $color = get_config('mod_courseinfo', 'herocolor_' . $cmid);
-            echo json_encode(array('success' => true, 'color' => $color ?: ''));
+            echo json_encode(['success' => true, 'color' => $color ?: '']);
             break;
 
         /* ── Save hero banner colour ─────────────────────────────────────── */
@@ -384,11 +411,11 @@ try {
             $color = required_param('color', PARAM_TEXT);
             /* Only allow valid hex colours — 3, 6, or 8 hex digits with leading # */
             if (!preg_match('/^#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3}(?:[0-9a-fA-F]{2})?)?$/', $color)) {
-                echo json_encode(array('success' => false, 'error' => 'Invalid colour value'));
+                echo json_encode(['success' => false, 'error' => 'Invalid colour value']);
                 break;
             }
             set_config('herocolor_' . $cmid, $color, 'mod_courseinfo');
-            echo json_encode(array('success' => true));
+            echo json_encode(['success' => true]);
             break;
 
         /* ── Check config ────────────────────────────────────────────────── */
@@ -396,34 +423,34 @@ try {
             courseinfo_require_manage($context);
             $config = courseinfo_get_api_config();
             if (empty($config['siteid']) || empty($config['apikey'])) {
-                echo json_encode(array('success' => false, 'error' => get_string('configerror', 'courseinfo')));
+                echo json_encode(['success' => false, 'error' => get_string('configerror', 'courseinfo')]);
                 break;
             }
             $apiurl = rtrim($config['apiurl'], '/') . '/api/moodle/course-info/check-config';
-            echo json_encode(courseinfo_api_call($apiurl, array(), $config));
+            echo json_encode(courseinfo_api_call($apiurl, [], $config));
             break;
 
         /* ── Student: submit learner acknowledgement ─────────────────────── */
         case 'acknowledge':
             require_capability('mod/courseinfo:view', $context);
             /* Check for existing acknowledgement — prevent duplicates */
-            $existing = $DB->get_record('courseinfo_ack', array(
+            $existing = $DB->get_record('courseinfo_ack', [
                 'courseinfoid' => $courseinfo->id,
                 'userid'       => $USER->id,
-            ));
+            ]);
             if ($existing) {
-                $dateStr = userdate($existing->timeacknowledged, get_string('strftimedatetimeshort', 'langconfig'));
-                echo json_encode(array(
+                $datestr = userdate($existing->timeacknowledged, get_string('strftimedatetimeshort', 'langconfig'));
+                echo json_encode([
                     'success'         => true,
                     'alreadyAcknowledged' => true,
                     'timeacknowledged'   => $existing->timeacknowledged,
-                    'date'               => $dateStr,
-                ));
+                    'date'               => $datestr,
+                ]);
                 break;
             }
             /* Check that courseinfo_ack table exists (safe guard for mid-upgrade) */
             if (!$DB->get_manager()->table_exists('courseinfo_ack')) {
-                echo json_encode(array('success' => false, 'error' => 'Acknowledgement table not yet created. Please ask your administrator to run the plugin upgrade.'));
+                echo json_encode(['success' => false, 'error' => 'Acknowledgement table not yet created. Please ask your administrator to run the plugin upgrade.']);
                 break;
             }
             $ack = new \stdClass();
@@ -433,49 +460,51 @@ try {
             $ack->ipaddress         = getremoteaddr('unknown');
             $ack->useragent         = substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 1000);
             $DB->insert_record('courseinfo_ack', $ack);
-            $dateStr = userdate($ack->timeacknowledged, get_string('strftimedatetimeshort', 'langconfig'));
-            echo json_encode(array(
+            $datestr = userdate($ack->timeacknowledged, get_string('strftimedatetimeshort', 'langconfig'));
+            echo json_encode([
                 'success'         => true,
                 'timeacknowledged' => $ack->timeacknowledged,
-                'date'             => $dateStr,
-            ));
+                'date'             => $datestr,
+            ]);
             break;
 
         /* ── Teacher: get acknowledgement count + list ───────────────────── */
         case 'getackcount':
             courseinfo_require_manage($context);
             if (!$DB->get_manager()->table_exists('courseinfo_ack')) {
-                echo json_encode(array('success' => true, 'count' => 0, 'records' => array()));
+                echo json_encode(['success' => true, 'count' => 0, 'records' => []]);
                 break;
             }
-            $ackCount   = $DB->count_records('courseinfo_ack', array('courseinfoid' => $courseinfo->id));
-            $ackRecords = $DB->get_records('courseinfo_ack', array('courseinfoid' => $courseinfo->id), 'timeacknowledged DESC', 'id,userid,timeacknowledged,ipaddress', 0, 50);
-            $ackList    = array();
-            foreach ($ackRecords as $rec) {
+            $ackcount   = $DB->count_records('courseinfo_ack', ['courseinfoid' => $courseinfo->id]);
+            $ackrecords = $DB->get_records('courseinfo_ack', ['courseinfoid' => $courseinfo->id], 'timeacknowledged DESC', 'id,userid,timeacknowledged,ipaddress', 0, 50);
+            $acklist    = [];
+            foreach ($ackrecords as $rec) {
                 // FIX-CI-FULLNAME-FIELDS (v1.0.44): include all six name fields required by
                 // fullname() in Moodle™ 4.x — partial user objects trigger a debugging()
                 // warning ("name fields missing: firstnamephonetic, lastnamephonetic,
                 // middlename, alternatename") which leaked into the AJAX JSON payload and
                 // broke the acknowledgement list rendering on the teacher report.
-                $u = $DB->get_record('user', array('id' => $rec->userid),
+                $u = $DB->get_record(
+                    'user',
+                    ['id' => $rec->userid],
                     'id,firstname,lastname,firstnamephonetic,lastnamephonetic,middlename,alternatename,email',
-                    IGNORE_MISSING);
-                $ackList[] = array(
+                    IGNORE_MISSING
+                );
+                $acklist[] = [
                     'userid'           => (int)$rec->userid,
                     'fullname'         => $u ? fullname($u) : 'User ' . $rec->userid,
                     'email'            => $u ? $u->email : '',
                     'timeacknowledged' => (int)$rec->timeacknowledged,
                     'date'             => userdate($rec->timeacknowledged, get_string('strftimedatetimeshort', 'langconfig')),
                     'ipaddress'        => $rec->ipaddress ?: '',
-                );
+                ];
             }
-            echo json_encode(array('success' => true, 'count' => (int)$ackCount, 'records' => $ackList));
+            echo json_encode(['success' => true, 'count' => (int)$ackcount, 'records' => $acklist]);
             break;
 
         default:
-            echo json_encode(array('success' => false, 'error' => 'Unknown action: ' . $action));
+            echo json_encode(['success' => false, 'error' => 'Unknown action: ' . $action]);
     }
-
 } catch (\Throwable $e) {
-    echo json_encode(array('success' => false, 'error' => $e->getMessage()));
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }

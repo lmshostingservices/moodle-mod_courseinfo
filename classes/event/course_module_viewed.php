@@ -1,12 +1,4 @@
 <?php
-/**
- * mod_courseinfo file.
- *
- * @package    mod_courseinfo
- * @copyright  2026 LMS-Labs
- * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
- */
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -22,18 +14,35 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * mod_courseinfo file.
+ *
+ * @package    mod_courseinfo
+ * @copyright  2026 LMS-Labs
+ * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
+
 namespace mod_courseinfo\event;
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Course module viewed.
+ */
 class course_module_viewed extends \core\event\course_module_viewed {
+    /**
+     * Init.
+     */
     protected function init() {
         $this->data['objecttable'] = 'courseinfo';
         $this->data['crud'] = 'r';
         $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
     }
 
+    /**
+     * Get objectid mapping.
+     */
     public static function get_objectid_mapping() {
-        return array('db' => 'courseinfo', 'restore' => 'courseinfo');
+        return ['db' => 'courseinfo', 'restore' => 'courseinfo'];
     }
 }

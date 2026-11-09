@@ -55,7 +55,7 @@ class courseinfo_structure {
                 'required' => true,
                 'fields'   => [
                     'course_title' => true,
-                    'course_code'  => false,  // Optional: only required for accredited units
+                    'course_code'  => false, // Optional: only required for accredited units
                 ],
             ],
 
@@ -64,7 +64,7 @@ class courseinfo_structure {
                 'required' => true,
                 'fields'   => [
                     'introduction'  => true,
-                    'trainer_video' => false,  // Optional: populated when video is available
+                    'trainer_video' => false, // Optional: populated when video is available
                 ],
             ],
 
@@ -111,7 +111,7 @@ class courseinfo_structure {
                 'required' => true,
                 'fields'   => [
                     'pathways'     => true,
-                    'licensing'    => false,  // Optional: only for licensed occupations
+                    'licensing'    => false, // Optional: only for licensed occupations
                     'job_outcomes' => true,
                 ],
             ],
@@ -121,15 +121,15 @@ class courseinfo_structure {
     /**
      * Returns the list of required field keys for a given section key.
      *
-     * @param  string $sectionKey
+     * @param  string $sectionkey
      * @return string[]
      */
-    public static function required_fields(string $sectionKey): array {
+    public static function required_fields(string $sectionkey): array {
         $structure = self::get();
-        if (empty($structure[$sectionKey]['fields'])) {
+        if (empty($structure[$sectionkey]['fields'])) {
             return [];
         }
-        return array_keys(array_filter($structure[$sectionKey]['fields']));
+        return array_keys(array_filter($structure[$sectionkey]['fields']));
     }
 
     /**

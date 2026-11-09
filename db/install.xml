@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/courseinfo/db" VERSION="2026041700042" COMMENT="AI Course Information module tables">
+<XMLDB PATH="mod/courseinfo/db" VERSION="2026110503" COMMENT="AI Course Information module tables">
   <TABLES>
     <TABLE NAME="courseinfo" COMMENT="AI Course Information activity instances">
       <FIELDS>
@@ -13,6 +13,8 @@
         <FIELD NAME="nominalhours" TYPE="int" LENGTH="5" NOTNULL="false" COMMENT="Nominal hours from NCVER or manual entry"/>
         <FIELD NAME="enablevol" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" COMMENT="Enable Volume of Learning section 1=yes 0=no"/>
         <FIELD NAME="enableasqa" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" COMMENT="Enable ASQA compliance sections (RPL, Complaints and Appeals) 1=yes 0=no"/>
+        <FIELD NAME="framework" TYPE="char" LENGTH="32" NOTNULL="true" DEFAULT="vet" COMMENT="Curriculum framework identifier"/>
+        <FIELD NAME="frameworkdata" TYPE="text" NOTNULL="false" COMMENT="Framework-specific curriculum details as JSON"/>
         <FIELD NAME="generatedhtml" TYPE="text" NOTNULL="false" COMMENT="Generated course information HTML"/>
         <FIELD NAME="generatedjson" TYPE="text" NOTNULL="false" COMMENT="Generated course information JSON data"/>
         <FIELD NAME="scanneddata" TYPE="text" NOTNULL="false" COMMENT="Last scanned activity data JSON"/>

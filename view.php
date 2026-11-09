@@ -1,4 +1,19 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+
 /**
  * mod_courseinfo file.
  *
@@ -7,25 +22,18 @@
  * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
  */
 
-// This file is part of Moodle - http://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
 require_once('../../config.php');
 
 $id = optional_param('id', 0, PARAM_INT);
-$n  = optional_param('n',  0, PARAM_INT);
+$n  = optional_param('n', 0, PARAM_INT);
 
 if ($id) {
     $cm         = get_coursemodule_from_id('courseinfo', $id, 0, false, MUST_EXIST);
-    $course     = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
-    $courseinfo = $DB->get_record('courseinfo', array('id' => $cm->instance), '*', MUST_EXIST);
+    $course     = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
+    $courseinfo = $DB->get_record('courseinfo', ['id' => $cm->instance], '*', MUST_EXIST);
 } else if ($n) {
-    $courseinfo = $DB->get_record('courseinfo', array('id' => $n), '*', MUST_EXIST);
-    $course     = $DB->get_record('course', array('id' => $courseinfo->course), '*', MUST_EXIST);
+    $courseinfo = $DB->get_record('courseinfo', ['id' => $n], '*', MUST_EXIST);
+    $course     = $DB->get_record('course', ['id' => $courseinfo->course], '*', MUST_EXIST);
     $cm         = get_coursemodule_from_instance('courseinfo', $courseinfo->id, $course->id, false, MUST_EXIST);
 } else {
     print_error('missingparam');
@@ -37,25 +45,25 @@ require_capability('mod/courseinfo:view', $context);
 
 courseinfo_view($courseinfo, $course, $cm, $context);
 
-$PAGE->set_url('/mod/courseinfo/view.php', array('id' => $cm->id));
+$PAGE->set_url('/mod/courseinfo/view.php', ['id' => $cm->id]);
 $PAGE->set_title(format_string($courseinfo->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($context);
 
-$canManage  = has_capability('mod/courseinfo:manage', $context) || has_capability('moodle/course:manageactivities', $context);
-$enableVol  = !empty($courseinfo->enablevol);
-$hasContent = !empty($courseinfo->generatedhtml);
+$canmanage  = has_capability('mod/courseinfo:manage', $context) || has_capability('moodle/course:manageactivities', $context);
+$enablevol  = !empty($courseinfo->enablevol);
+$hascontent = !empty($courseinfo->generatedhtml);
 
 /* ── Learner Acknowledgement Status ───────────────────────────────────────── */
-$userHasAcknowledged = false;
-$ackRecord           = null;
-$ackCount            = 0;
-if ($hasContent && $DB->get_manager()->table_exists('courseinfo_ack')) {
-    if (!$canManage) {
-        $ackRecord           = $DB->get_record('courseinfo_ack', array('courseinfoid' => $courseinfo->id, 'userid' => $USER->id));
-        $userHasAcknowledged = !empty($ackRecord);
+$userhasacknowledged = false;
+$ackrecord           = null;
+$ackcount            = 0;
+if ($hascontent && $DB->get_manager()->table_exists('courseinfo_ack')) {
+    if (!$canmanage) {
+        $ackrecord           = $DB->get_record('courseinfo_ack', ['courseinfoid' => $courseinfo->id, 'userid' => $USER->id]);
+        $userhasacknowledged = !empty($ackrecord);
     } else {
-        $ackCount = $DB->count_records('courseinfo_ack', array('courseinfoid' => $courseinfo->id));
+        $ackcount = $DB->count_records('courseinfo_ack', ['courseinfoid' => $courseinfo->id]);
     }
 }
 
@@ -74,19 +82,21 @@ try {
     } else {
         $secondarycolour = $primarycolour;
     }
-} catch (\Exception $e) { /* fallback */ }
+} catch (\Exception $e) {
+    /* fallback */
+}
 
 /* ── AMD init ─────────────────────────────────────────────────────────────── */
-$PAGE->requires->js_call_amd('mod_courseinfo/courseinfo', 'init', array(
+$PAGE->requires->js_call_amd('mod_courseinfo/courseinfo', 'init', [
     $cm->id,
-    $canManage,
-    $hasContent,
+    $canmanage,
+    $hascontent,
     $courseinfo->unitcode ?: '',
     (int)($courseinfo->nominalhours ?: 0),
-    $enableVol,
+    $enablevol,
     $primarycolour,
     $secondarycolour,
-));
+]);
 
 echo $OUTPUT->header();
 echo '<div id="courseinfo-app" data-cmid="' . $cm->id . '">';
@@ -94,29 +104,30 @@ echo '<div id="courseinfo-app" data-cmid="' . $cm->id . '">';
 /* ════════════════════════════════════════════════════════════════════════════
    TEACHER VIEW
    ════════════════════════════════════════════════════════════════════════════ */
-if ($canManage) {
-
+if ($canmanage) {
     /* ── Teacher toolbar ── */
     echo '<div id="courseinfo-toolbar" class="mb-3">';
     echo '<div class="d-flex flex-wrap align-items-center gap-2">';
 
-    if ($enableVol && !empty($courseinfo->unitcode)) {
+    if ($enablevol && !empty($courseinfo->unitcode)) {
         echo '<span class="badge badge-info" style="font-size:0.9em;padding:6px 12px;background:var(--primary,' . s($primarycolour) . ');color:#fff;border-radius:4px;">';
         echo s($courseinfo->unitcode);
-        if (!empty($courseinfo->unittitle)) { echo ' — ' . s($courseinfo->unittitle); }
+        if (!empty($courseinfo->unittitle)) {
+            echo ' — ' . s($courseinfo->unittitle);
+        }
         echo '</span>';
     }
-    if ($enableVol && !empty($courseinfo->nominalhours)) {
+    if ($enablevol && !empty($courseinfo->nominalhours)) {
         echo '<span class="badge badge-secondary" style="font-size:0.9em;padding:6px 12px;border-radius:4px;">';
         echo 'Nominal Hours: ' . (int)$courseinfo->nominalhours;
         echo '</span>';
     }
 
-    if ($hasContent && $ackCount > 0) {
+    if ($hascontent && $ackcount > 0) {
         echo '<span class="badge badge-success" style="font-size:0.85em;padding:5px 10px;border-radius:4px;background:#1a7340;color:#fff;" title="Number of students who have formally acknowledged reading this course information">';
-        echo '<i class="fa fa-check-circle mr-1"></i> ' . $ackCount . ' student' . ($ackCount === 1 ? '' : 's') . ' acknowledged';
+        echo '<i class="fa fa-check-circle mr-1"></i> ' . $ackcount . ' student' . ($ackcount === 1 ? '' : 's') . ' acknowledged';
         echo '</span>';
-    } else if ($hasContent) {
+    } else if ($hascontent) {
         echo '<span class="badge badge-warning" style="font-size:0.85em;padding:5px 10px;border-radius:4px;background:#856404;color:#fff;" title="No students have acknowledged this course information yet">';
         echo '<i class="fa fa-clock-o mr-1"></i> 0 acknowledged';
         echo '</span>';
@@ -124,20 +135,20 @@ if ($canManage) {
 
     echo '<button id="btn-scan" class="btn btn-outline-secondary btn-sm"><i class="fa fa-search mr-1"></i> Scan Activities</button>';
 
-    $btnLabel = $hasContent ? get_string('regeneratecourseinfo', 'courseinfo') : get_string('generatecourseinfo', 'courseinfo');
-    echo '<button id="btn-generate" class="btn btn-primary btn-sm"><i class="fa fa-magic mr-1"></i> ' . $btnLabel . '</button>';
+    $btnlabel = $hascontent ? get_string('regeneratecourseinfo', 'courseinfo') : get_string('generatecourseinfo', 'courseinfo');
+    echo '<button id="btn-generate" class="btn btn-primary btn-sm"><i class="fa fa-magic mr-1"></i> ' . $btnlabel . '</button>';
 
-    echo '<button id="btn-add-box" class="btn btn-outline-success btn-sm" style="' . ($hasContent ? '' : 'display:none') . '">';
+    echo '<button id="btn-add-box" class="btn btn-outline-success btn-sm" style="' . ($hascontent ? '' : 'display:none') . '">';
     echo '<i class="fa fa-plus-circle mr-1"></i> Add Box</button>';
 
-    echo '<button id="btn-edit" class="btn btn-outline-warning btn-sm" style="' . ($hasContent ? '' : 'display:none') . '">';
+    echo '<button id="btn-edit" class="btn btn-outline-warning btn-sm" style="' . ($hascontent ? '' : 'display:none') . '">';
     echo '<i class="fa fa-pencil mr-1"></i> Edit</button>';
     echo '<button id="btn-save" class="btn btn-success btn-sm" style="display:none">';
     echo '<i class="fa fa-check mr-1"></i> Save Changes</button>';
     echo '<button id="btn-cancel-edit" class="btn btn-outline-secondary btn-sm" style="display:none">';
     echo '<i class="fa fa-times mr-1"></i> Cancel</button>';
 
-    echo '<button id="btn-print" class="btn btn-outline-secondary btn-sm" style="' . ($hasContent ? '' : 'display:none') . '">';
+    echo '<button id="btn-print" class="btn btn-outline-secondary btn-sm" style="' . ($hascontent ? '' : 'display:none') . '">';
     echo '<i class="fa fa-print mr-1"></i> ' . get_string('printcourseinfo', 'courseinfo') . '</button>';
 
     /* FEATURE-HEROBG: Hero banner colour picker.
@@ -146,7 +157,7 @@ if ($canManage) {
        Uses btn-outline-info btn-sm to match the other toolbar buttons. */
     echo '<label id="btn-hero-color-wrap" title="Change hero banner colour" ';
     echo 'class="btn btn-outline-info btn-sm" ';
-    echo 'style="cursor:pointer;position:relative;display:' . ($hasContent ? 'inline-flex' : 'none') . ';align-items:center;gap:5px;white-space:nowrap;margin:0;">';
+    echo 'style="cursor:pointer;position:relative;display:' . ($hascontent ? 'inline-flex' : 'none') . ';align-items:center;gap:5px;white-space:nowrap;margin:0;">';
     echo '<i class="fa fa-paint-brush"></i> Hero Colour';
     echo '<input type="color" id="btn-hero-color" value="' . s($primarycolour) . '" ';
     echo 'style="position:absolute;opacity:0;width:100%;height:100%;top:0;left:0;cursor:pointer;border:none;padding:0;">';
@@ -160,17 +171,18 @@ if ($canManage) {
 
     echo '<div id="courseinfo-scan-results" style="display:none;" class="mb-3"></div>';
 
-/* ════════════════════════════════════════════════════════════════════════════
-   STUDENT VIEW  — no scan / regenerate / edit, just info badges + print
-   ════════════════════════════════════════════════════════════════════════════ */
+    /* ════════════════════════════════════════════════════════════════════════════
+    STUDENT VIEW  — no scan / regenerate / edit, just info badges + print
+    ════════════════════════════════════════════════════════════════════════════ */
 } else {
-
-    if ($enableVol && (!empty($courseinfo->unitcode) || !empty($courseinfo->nominalhours))) {
+    if ($enablevol && (!empty($courseinfo->unitcode) || !empty($courseinfo->nominalhours))) {
         echo '<div class="mb-3 d-flex flex-wrap align-items-center gap-2">';
         if (!empty($courseinfo->unitcode)) {
             echo '<span class="badge badge-info" style="font-size:0.9em;padding:6px 12px;background:var(--primary,' . s($primarycolour) . ');color:#fff;border-radius:4px;">';
             echo s($courseinfo->unitcode);
-            if (!empty($courseinfo->unittitle)) { echo ' — ' . s($courseinfo->unittitle); }
+            if (!empty($courseinfo->unittitle)) {
+                echo ' — ' . s($courseinfo->unittitle);
+            }
             echo '</span>';
         }
         if (!empty($courseinfo->nominalhours)) {
@@ -181,7 +193,7 @@ if ($canManage) {
         echo '</div>';
     }
 
-    if ($hasContent) {
+    if ($hascontent) {
         echo '<div class="mb-3">';
         echo '<button id="btn-print" class="btn btn-outline-secondary btn-sm">';
         echo '<i class="fa fa-print mr-1"></i> ' . get_string('printcourseinfo', 'courseinfo') . '</button>';
@@ -193,9 +205,9 @@ if ($canManage) {
 
 /* ── Generated content (both teacher + student) ── */
 echo '<div id="courseinfo-generated">';
-if ($hasContent) {
+if ($hascontent) {
     echo \mod_courseinfo\manifest_storage::decompress($courseinfo->generatedhtml);
-} else if ($canManage) {
+} else if ($canmanage) {
     echo '<div class="alert alert-warning mb-3"><i class="fa fa-info-circle mr-2"></i>' . get_string('nocourseinfo', 'courseinfo') . '</div>';
 }
 echo '</div>';
@@ -240,28 +252,28 @@ echo '<style>
 echo '<div id="courseinfo-custom-boxes"></div>';
 
 /* Volume of learning panel (teacher only) */
-if ($canManage && $enableVol && !empty($courseinfo->volumebreakdown)) {
-    $volData = json_decode(\mod_courseinfo\manifest_storage::decompress($courseinfo->volumebreakdown), true);
-    if ($volData) {
+if ($canmanage && $enablevol && !empty($courseinfo->volumebreakdown)) {
+    $voldata = json_decode(\mod_courseinfo\manifest_storage::decompress($courseinfo->volumebreakdown), true);
+    if ($voldata) {
         echo '<div id="courseinfo-volume" class="mt-4">';
-        echo courseinfo_render_volume_panel($volData);
+        echo courseinfo_render_volume_panel($voldata);
         echo '</div>';
     }
 }
 
 /* ── Learner Acknowledgement Section ──────────────────────────────────────── */
-if ($hasContent) {
+if ($hascontent) {
     echo '<div id="courseinfo-ack-wrap" class="mt-4">';
 
-    if ($canManage) {
+    if ($canmanage) {
         /* Teacher view: acknowledgement list link */
         echo '<div style="background:#f0f9f0;border:1px solid #b7dfb9;border-radius:8px;padding:14px 18px;display:flex;align-items:center;gap:12px;">';
         echo '<i class="fa fa-check-circle" style="font-size:22px;color:#1a7340;flex-shrink:0;"></i>';
         echo '<div style="flex:1;">';
         echo '<div style="font-weight:600;font-size:0.95em;color:#1a7340;">Learner Acknowledgement Audit Trail</div>';
         echo '<div style="font-size:0.85em;color:#2d6a4f;margin-top:3px;">';
-        if ($ackCount > 0) {
-            echo '<strong>' . $ackCount . '</strong> student' . ($ackCount === 1 ? ' has' : 's have') . ' formally acknowledged reading this course information.';
+        if ($ackcount > 0) {
+            echo '<strong>' . $ackcount . '</strong> student' . ($ackcount === 1 ? ' has' : 's have') . ' formally acknowledged reading this course information.';
             echo ' This record is stored with timestamp and IP address for ASQA audit evidence.';
         } else {
             echo 'No students have acknowledged this course information yet. Acknowledgements are recorded with timestamp and IP address for ASQA audit evidence.';
@@ -269,19 +281,18 @@ if ($hasContent) {
         echo '</div>';
         echo '</div>';
         echo '</div>';
-
     } else {
         /* Student view */
-        if ($userHasAcknowledged && $ackRecord) {
+        if ($userhasacknowledged && $ackrecord) {
             /* Already acknowledged — show green confirmation */
-            $ackDate = userdate($ackRecord->timeacknowledged, get_string('strftimedatetimeshort', 'langconfig'));
+            $ackdate = userdate($ackrecord->timeacknowledged, get_string('strftimedatetimeshort', 'langconfig'));
             echo '<div id="ci-ack-confirmed" style="background:#f0f9f0;border:1px solid #b7dfb9;border-radius:8px;padding:18px 20px;">';
             echo '<div style="display:flex;align-items:flex-start;gap:12px;">';
             echo '<i class="fa fa-check-circle" style="font-size:28px;color:#1a7340;flex-shrink:0;margin-top:2px;"></i>';
             echo '<div>';
             echo '<div style="font-weight:700;font-size:1em;color:#1a7340;">Course Information Acknowledged</div>';
             echo '<div style="font-size:0.88em;color:#2d6a4f;margin-top:4px;">';
-            echo 'You acknowledged receipt and understanding of this course information on <strong>' . s($ackDate) . '</strong>.';
+            echo 'You acknowledged receipt and understanding of this course information on <strong>' . s($ackdate) . '</strong>.';
             echo ' This record is held by ' . s($courseinfo->name) . ' as evidence of pre-enrolment disclosure.';
             echo '</div>';
             echo '</div>';
@@ -416,6 +427,9 @@ echo '
 
 echo $OUTPUT->footer();
 
+/**
+ * Courseinfo render volume panel.
+ */
 function courseinfo_render_volume_panel($vol) {
     /* BUG-CI-VOLCSS: Rewritten to match the section-card design used by AI-generated
        sections. No Bootstrap "card" class, no border-left — full border + border-radius
@@ -423,13 +437,13 @@ function courseinfo_render_volume_panel($vol) {
        CSS vars --ci-primary / --ci-secondary / --ci-surface are set on
        #courseinfo-volume by applyThemeCssVars() in courseinfo.js. */
 
-    $totalHours   = $vol['total_hours'] ?? $vol['adjusted_total_hours'] ?? 0;
-    $nominalHours = $vol['nominal_hours'] ?? 0;
+    $totalhours   = $vol['total_hours'] ?? $vol['adjusted_total_hours'] ?? 0;
+    $nominalhours = $vol['nominal_hours'] ?? 0;
     $compliant    = !empty($vol['compliant']);
-    $gapHours     = $vol['gap_hours'] ?? max(0, $nominalHours - $totalHours);
-    $sColor       = $compliant ? 'var(--ci-secondary,var(--primary,#34a853))' : '#dc3545';
-    $sIcon        = $compliant ? 'fa-check-circle' : 'fa-exclamation-triangle';
-    $sText        = $compliant ? 'Compliant' : 'Non-Compliant';
+    $gaphours     = $vol['gap_hours'] ?? max(0, $nominalhours - $totalhours);
+    $scolor       = $compliant ? 'var(--ci-secondary,var(--primary,#34a853))' : '#dc3545';
+    $sicon        = $compliant ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    $stext        = $compliant ? 'Compliant' : 'Non-Compliant';
 
     /* Card wrapper — matches section card design exactly */
     $html  = '<div class="ci-card" style="background:#fff;border:1px solid var(--ci-border,#dbeafe);border-radius:12px;padding:28px 32px;margin-bottom:24px;box-shadow:0 2px 8px rgba(0,0,0,0.07);">';
@@ -445,26 +459,26 @@ function courseinfo_render_volume_panel($vol) {
     $html .= '<div style="display:flex;gap:12px;margin-bottom:20px;">';
 
     $html .= '<div style="flex:1;padding:14px 12px;background:var(--ci-surface,#eef2ff);border-radius:8px;text-align:center;">';
-    $html .= '<div style="font-size:1.9em;font-weight:700;color:var(--ci-primary,var(--primary,#1a73e8));">' . $totalHours . '</div>';
+    $html .= '<div style="font-size:1.9em;font-weight:700;color:var(--ci-primary,var(--primary,#1a73e8));">' . $totalhours . '</div>';
     $html .= '<div style="font-size:0.82em;color:#64748b;margin-top:4px;">Total Hours</div></div>';
 
     $html .= '<div style="flex:1;padding:14px 12px;background:var(--ci-surface,#eef2ff);border-radius:8px;text-align:center;">';
-    $html .= '<div style="font-size:1.9em;font-weight:700;color:#1e293b;">' . $nominalHours . '</div>';
+    $html .= '<div style="font-size:1.9em;font-weight:700;color:#1e293b;">' . $nominalhours . '</div>';
     $html .= '<div style="font-size:0.82em;color:#64748b;margin-top:4px;">Nominal Required</div></div>';
 
     $html .= '<div style="flex:1;padding:14px 12px;background:var(--ci-surface,#eef2ff);border-radius:8px;text-align:center;">';
-    $html .= '<div style="font-size:1.9em;font-weight:700;color:' . $sColor . ';"><i class="fa ' . $sIcon . '"></i></div>';
-    $html .= '<div style="font-size:0.82em;color:' . $sColor . ';font-weight:600;margin-top:4px;">' . $sText . '</div></div>';
+    $html .= '<div style="font-size:1.9em;font-weight:700;color:' . $scolor . ';"><i class="fa ' . $sicon . '"></i></div>';
+    $html .= '<div style="font-size:0.82em;color:' . $scolor . ';font-weight:600;margin-top:4px;">' . $stext . '</div></div>';
     $html .= '</div>';
 
     /* Gap alert */
-    if (!$compliant && $gapHours > 0) {
+    if (!$compliant && $gaphours > 0) {
         $html .= '<div style="background:#fff8e6;border:1px solid #f0c040;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:0.88em;color:#7a5a00;">';
         $html .= '<i class="fa fa-exclamation-triangle" style="margin-right:6px;"></i>';
-        $html .= 'Volume gap: <strong>' . $gapHours . ' hours</strong> below the ' . $nominalHours . ' hr requirement.</div>';
+        $html .= 'Volume gap: <strong>' . $gaphours . ' hours</strong> below the ' . $nominalhours . ' hr requirement.</div>';
     }
 
-    $colors = array(
+    $colors = [
         'contentcreator'      => 'var(--ci-primary,#1a73e8)',
         'aiactivities'        => 'var(--ci-secondary,#34a853)',
         'essaymaker'          => '#ea4335',
@@ -472,8 +486,8 @@ function courseinfo_render_volume_panel($vol) {
         'assignment'          => '#673ab7',
         'practicalassessment' => '#ff6d00',
         'other'               => '#607d8b',
-    );
-    $catOrder = array('contentcreator','aiactivities','essaymaker','knowledgecheck','assignment','practicalassessment','other');
+    ];
+    $catorder = ['contentcreator', 'aiactivities', 'essaymaker', 'knowledgecheck', 'assignment', 'practicalassessment', 'other'];
 
     $html .= '<table style="width:100%;border-collapse:collapse;font-size:0.88em;">';
     $html .= '<thead><tr style="border-bottom:2px solid var(--ci-border,#dbeafe);">';
@@ -485,32 +499,41 @@ function courseinfo_render_volume_panel($vol) {
     if (!empty($vol['sections_breakdown'])) {
         /* ── Section-grouped rows (v1.0.19+) ── */
         foreach ($vol['sections_breakdown'] as $sect) {
-            $hasContent = false;
-            foreach ($catOrder as $cat) {
-                if (!empty($sect['categories'][$cat]['count'])) { $hasContent = true; break; }
+            $hascontent = false;
+            foreach ($catorder as $cat) {
+                if (!empty($sect['categories'][$cat]['count'])) {
+                    $hascontent = true;
+                    break;
+                }
             }
-            if (!$hasContent) { continue; }
+            if (!$hascontent) {
+                continue;
+            }
 
             $html .= '<tr style="background:var(--ci-surface,#eef2ff);">';
             $html .= '<td colspan="3" style="font-weight:600;font-size:0.85em;padding:6px 4px;color:var(--ci-primary,#1a73e8);">';
             $html .= '<i class="fa fa-folder-open-o" style="margin-right:6px;"></i>' . htmlspecialchars($sect['name']) . '</td></tr>';
 
-            foreach ($catOrder as $cat) {
-                $catData = $sect['categories'][$cat] ?? null;
-                if (!$catData || $catData['count'] <= 0) { continue; }
+            foreach ($catorder as $cat) {
+                $catdata = $sect['categories'][$cat] ?? null;
+                if (!$catdata || $catdata['count'] <= 0) {
+                    continue;
+                }
                 $color = $colors[$cat] ?? '#607d8b';
                 $html .= '<tr style="border-bottom:1px solid var(--ci-border,#dbeafe);">';
-                $html .= '<td style="padding:7px 4px 7px 22px;"><span style="display:inline-block;width:10px;height:10px;background:' . $color . ';border-radius:2px;margin-right:8px;"></span>' . htmlspecialchars($catData['label']) . '</td>';
-                $html .= '<td style="padding:7px 4px;text-align:center;">' . (int)$catData['count'] . '</td>';
-                $html .= '<td style="padding:7px 4px;text-align:right;font-weight:600;">' . htmlspecialchars((string)$catData['hours']) . ' hrs</td>';
+                $html .= '<td style="padding:7px 4px 7px 22px;"><span style="display:inline-block;width:10px;height:10px;background:' . $color . ';border-radius:2px;margin-right:8px;"></span>' . htmlspecialchars($catdata['label']) . '</td>';
+                $html .= '<td style="padding:7px 4px;text-align:center;">' . (int)$catdata['count'] . '</td>';
+                $html .= '<td style="padding:7px 4px;text-align:right;font-weight:600;">' . htmlspecialchars((string)$catdata['hours']) . ' hrs</td>';
                 $html .= '</tr>';
             }
         }
     } else if (!empty($vol['breakdown'])) {
         /* ── Flat rows (backward compat for pre-v1.0.19 scan data) ── */
-        foreach ($catOrder as $cat) {
+        foreach ($catorder as $cat) {
             $data = $vol['breakdown'][$cat] ?? null;
-            if (!$data || ($data['minutes'] <= 0 && $data['count'] <= 0)) { continue; }
+            if (!$data || ($data['minutes'] <= 0 && $data['count'] <= 0)) {
+                continue;
+            }
             $color = $colors[$cat] ?? '#607d8b';
             $html .= '<tr style="border-bottom:1px solid var(--ci-border,#dbeafe);">';
             $html .= '<td style="padding:7px 4px;"><span style="display:inline-block;width:10px;height:10px;background:' . $color . ';border-radius:2px;margin-right:8px;"></span>' . htmlspecialchars($data['label']) . '</td>';
@@ -522,7 +545,7 @@ function courseinfo_render_volume_panel($vol) {
 
     $html .= '<tr style="border-top:2px solid var(--ci-border,#dbeafe);font-weight:700;">';
     $html .= '<td style="padding:8px 4px;">Total</td><td></td>';
-    $html .= '<td style="padding:8px 4px;text-align:right;">' . $totalHours . ' hrs</td></tr>';
+    $html .= '<td style="padding:8px 4px;text-align:right;">' . $totalhours . ' hrs</td></tr>';
     $html .= '</tbody></table>';
     $html .= '</div>'; /* close ci-card */
     return $html;

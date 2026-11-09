@@ -1,12 +1,4 @@
 <?php
-/**
- * mod_courseinfo file.
- *
- * @package    mod_courseinfo
- * @copyright  2026 LMS-Labs
- * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
- */
-
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -22,35 +14,52 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * mod_courseinfo file.
+ *
+ * @package    mod_courseinfo
+ * @copyright  2026 LMS-Labs
+ * @license    http://www.gnu.org/licenses/gpl-3.0.html GNU GPL v3 or later
+ */
+
 namespace mod_courseinfo;
 
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Scanner.
+ */
 class scanner {
     protected $courseid;
     protected $course;
 
+    /**
+     * Construct.
+     */
     public function __construct($courseid) {
         global $DB;
         $this->courseid = $courseid;
-        $this->course = $DB->get_record('course', array('id' => $courseid), '*', MUST_EXIST);
+        $this->course = $DB->get_record('course', ['id' => $courseid], '*', MUST_EXIST);
     }
 
+    /**
+     * Scan all activities.
+     */
     public function scan_all_activities() {
-        $result = array(
-            'course' => array(
+        $result = [
+            'course' => [
                 'id' => $this->course->id,
                 'fullname' => $this->course->fullname,
                 'shortname' => $this->course->shortname,
-                'summary' => strip_tags($this->course->summary),
+                'summary' => strip_tags((string)($this->course->summary ?? "")),
                 'format' => $this->course->format,
-            ),
-            'activities' => array(),
-            'summary' => array(
+            ],
+            'activities' => [],
+            'summary' => [
                 'total_activities' => 0,
-                'by_type' => array(),
-            ),
-        );
+                'by_type' => [],
+            ],
+        ];
 
         $modinfo = get_fast_modinfo($this->course);
         $sections = $modinfo->get_section_info_all();
@@ -88,15 +97,18 @@ class scanner {
         return $result;
     }
 
+    /**
+     * Scan activity.
+     */
     protected function scan_activity($cm, $section) {
-        $base = array(
+        $base = [
             'cmid' => $cm->id,
             'modname' => $cm->modname,
             'name' => format_string($cm->name),
             'section_name' => get_section_name($this->course, $section),
             'section_num' => $section->section,
             'visible' => $cm->visible,
-        );
+        ];
 
         switch ($cm->modname) {
             case 'contentcreator':
@@ -120,122 +132,167 @@ class scanner {
                 return $this->scan_resource($cm, $base);
             case 'aivideoactivity':
                 return $this->scan_aivideoactivity($cm, $base);
+            case 'visuallearning':
+                return $this->scan_visuallearning($cm, $base);
             default:
                 return $this->scan_generic($cm, $base);
         }
     }
 
+    /**
+     * Scan contentcreator.
+     */
     protected function scan_contentcreator($cm, $base) {
         global $DB;
-        $cc = $DB->get_record('contentcreator', array('id' => $cm->instance));
+        $cc = $DB->get_record('contentcreator', ['id' => $cm->instance]);
         if (!$cc) {
             return null;
         }
 
         $base['type'] = 'contentcreator';
-        $base['description'] = 'Interactive AI-generated learning content with slides, activities and knowledge checks';
+        $base['description'] = 'Interactive learning content with slides, activities and knowledge checks';
         $base['estimated_minutes'] = 0;
 
-        $topics = array();
-        $totalSlides = 0;
+        $topics = [];
+        $totalslides = 0;
 
         if (!empty($cc->manifestjson)) {
             $manifest = json_decode($cc->manifestjson, true);
             if ($manifest && isset($manifest['topics'])) {
                 foreach ($manifest['topics'] as $topic) {
-                    $slideCount = 0;
+                    $slidecount = 0;
                     if (isset($topic['slides'])) {
-                        $slideCount = count($topic['slides']);
-                    } elseif (isset($topic['subtopics'])) {
+                        $slidecount = count($topic['slides']);
+                    } else if (isset($topic['subtopics'])) {
                         foreach ($topic['subtopics'] as $sub) {
-                            $slideCount += isset($sub['slides']) ? count($sub['slides']) : 1;
+                            $slidecount += isset($sub['slides']) ? count($sub['slides']) : 1;
                         }
                     }
-                    $totalSlides += $slideCount;
+                    $totalslides += $slidecount;
 
-                    $subtopicCount = isset($topic['subtopics']) ? count($topic['subtopics']) : 0;
+                    $subtopiccount = isset($topic['subtopics']) ? count($topic['subtopics']) : 0;
 
-                    $topics[] = array(
+                    $topics[] = [
                         'title' => $topic['title'] ?? $topic['name'] ?? 'Untitled',
-                        'subtopics' => $subtopicCount,
-                        'slides' => $slideCount,
-                    );
+                        'subtopics' => $subtopiccount,
+                        'slides' => $slidecount,
+                    ];
                 }
             }
         }
 
-        $avgMinPerSlide = 20;
-        $base['estimated_minutes'] = max(20, round($totalSlides * $avgMinPerSlide));
+        $avgminperslide = 20;
+        $base['estimated_minutes'] = max(20, round($totalslides * $avgminperslide));
         $base['topics'] = $topics;
-        $base['total_slides'] = $totalSlides;
+        $base['total_slides'] = $totalslides;
         $base['total_topics'] = count($topics);
 
         return $base;
     }
 
+    /**
+     * Scan aiactivities.
+     */
     protected function scan_aiactivities($cm, $base) {
         global $DB;
-        $aa = $DB->get_record('aiactivities', array('id' => $cm->instance));
+        $aa = $DB->get_record('aiactivities', ['id' => $cm->instance]);
         if (!$aa) {
             return null;
         }
 
         $base['type'] = 'aiactivities';
-        $base['description'] = 'AI-generated interactive learning activities and scenarios';
+        $base['description'] = 'Interactive practice activities';
 
         // activitiesjson stores a direct JSON array of activity objects.
         // Fall back to activitycount (the requested count) if content not yet generated.
-        $scenarioCount = 0;
+        $scenariocount = 0;
         if (!empty($aa->activitiesjson)) {
             $content = json_decode($aa->activitiesjson, true);
             if (is_array($content)) {
                 // Direct array of activity objects.
-                $scenarioCount = count($content);
+                $scenariocount = count($content);
             }
         }
         // If still zero (not yet generated), use the configured activitycount setting.
-        if ($scenarioCount === 0 && !empty($aa->activitycount)) {
-            $scenarioCount = (int)$aa->activitycount;
+        if ($scenariocount === 0 && !empty($aa->activitycount)) {
+            $scenariocount = (int)$aa->activitycount;
         }
 
-        $base['scenario_count'] = $scenarioCount;
-        $base['estimated_minutes'] = max(2, $scenarioCount * 2);
+        $base['scenario_count'] = $scenariocount;
+        $base['estimated_minutes'] = max(2, $scenariocount * 2);
 
         return $base;
     }
 
+    /**
+     * Scan visuallearning: one illustrated, narrated page per concept, then a recap.
+     *
+     * @param \cm_info $cm
+     * @param array $base
+     * @return array|null
+     */
+    protected function scan_visuallearning($cm, $base) {
+        global $DB;
+        $vl = $DB->get_record('visuallearning', ['id' => $cm->instance]);
+        if (!$vl) {
+            return null;
+        }
+        $base['type'] = 'visuallearning';
+        $base['description'] = 'Visual Learning lesson: illustrated pages read aloud, then a recap and check questions';
+        $topics = [];
+        if ($DB->get_manager()->table_exists('visuallearning_pages')) {
+            foreach ($DB->get_records('visuallearning_pages', ['visuallearningid' => $vl->id], 'pagenum ASC', 'id, title') as $p) {
+                $topics[] = ['title' => format_string((string)$p->title)];
+            }
+        }
+        $base['topics'] = $topics;
+        $base['total_slides'] = count($topics);
+        $base['total_topics'] = count($topics);
+        $base['estimated_minutes'] = max(5, count($topics) * 2 + 3);
+        if (!empty($vl->objectives)) {
+            $base['instructions'] = 'Learning objectives: ' . trim(strip_tags((string)$vl->objectives));
+        }
+        return $base;
+    }
+
+    /**
+     * Scan aiknowledgecheck.
+     */
     protected function scan_aiknowledgecheck($cm, $base) {
         global $DB;
-        $kc = $DB->get_record('aiknowledgecheck', array('id' => $cm->instance));
+        $kc = $DB->get_record('aiknowledgecheck', ['id' => $cm->instance]);
         if (!$kc) {
             return null;
         }
 
         $base['type'] = 'knowledgecheck';
-        $base['description'] = 'AI-generated knowledge check assessment';
+        $base['description'] = 'Knowledge check questions';
 
-        $questionCount = 0;
+        $questioncount = 0;
         if (!empty($kc->generatedcontent)) {
             $content = json_decode($kc->generatedcontent, true);
             if ($content && isset($content['questions'])) {
-                $questionCount = count($content['questions']);
+                $questioncount = count($content['questions']);
             }
         }
-        if ($questionCount === 0 && !empty($kc->questioncount)) {
-            $questionCount = (int)$kc->questioncount;
+        if ($questioncount === 0 && !empty($kc->questioncount)) {
+            $questioncount = (int)$kc->questioncount;
         }
 
-        $base['question_count'] = $questionCount;
-        $base['estimated_minutes'] = max(2, $questionCount * 2);
+        $base['question_count'] = $questioncount;
+        $base['estimated_minutes'] = max(2, $questioncount * 2);
         $base['max_attempts'] = isset($kc->maxattempts) ? (int)$kc->maxattempts : 0;
         $base['passing_grade'] = isset($kc->passinggrade) ? (int)$kc->passinggrade : 0;
 
         return $base;
     }
 
+    /**
+     * Scan assign.
+     */
     protected function scan_assign($cm, $base) {
         global $DB;
-        $assign = $DB->get_record('assign', array('id' => $cm->instance));
+        $assign = $DB->get_record('assign', ['id' => $cm->instance]);
         if (!$assign) {
             return null;
         }
@@ -244,35 +301,40 @@ class scanner {
         $base['description'] = strip_tags($assign->intro ?? '');
         $base['instructions'] = strip_tags($assign->intro ?? '');
 
-        $hasSubmission   = false;
-        $submissionTypes = array();
-        $plugins = $DB->get_records('assign_plugin_config', array('assignment' => $assign->id, 'name' => 'enabled', 'value' => '1'));
+        $hassubmission   = false;
+        $submissiontypes = [];
+        $plugins = $DB->get_records('assign_plugin_config', ['assignment' => $assign->id, 'name' => 'enabled', 'value' => '1']);
         foreach ($plugins as $plugin) {
             if ($plugin->subtype === 'assignsubmission') {
-                $hasSubmission     = true;
-                $submissionTypes[] = $plugin->plugin;
+                $hassubmission     = true;
+                $submissiontypes[] = $plugin->plugin;
             }
         }
 
-        $isEssayGrader = false;
+        $isessaygrader = false;
         if ($DB->get_manager()->table_exists('assignfeedback_aipdf')) {
-            $isEssayGrader = $DB->record_exists('assign_plugin_config',
-                array('assignment' => $assign->id, 'plugin' => 'aipdf', 'name' => 'enabled', 'value' => '1'));
+            $isessaygrader = $DB->record_exists(
+                'assign_plugin_config',
+                ['assignment' => $assign->id, 'plugin' => 'aipdf', 'name' => 'enabled', 'value' => '1']
+            );
         }
 
-        $base['has_submission'] = $hasSubmission;
-        $base['submission_types'] = $submissionTypes;
-        $base['is_essay_grader'] = $isEssayGrader;
+        $base['has_submission'] = $hassubmission;
+        $base['submission_types'] = $submissiontypes;
+        $base['is_essay_grader'] = $isessaygrader;
         $base['max_attempts'] = isset($assign->maxattempts) ? (int)$assign->maxattempts : -1;
         $base['due_date'] = !empty($assign->duedate) ? date('d M Y', $assign->duedate) : null;
-        $base['estimated_minutes'] = $isEssayGrader ? 60 : 45;
+        $base['estimated_minutes'] = $isessaygrader ? 60 : 45;
 
         return $base;
     }
 
+    /**
+     * Scan practicalassessment.
+     */
     protected function scan_practicalassessment($cm, $base) {
         global $DB;
-        $pa = $DB->get_record('practicalassessment', array('id' => $cm->instance));
+        $pa = $DB->get_record('practicalassessment', ['id' => $cm->instance]);
         if (!$pa) {
             return null;
         }
@@ -292,9 +354,12 @@ class scanner {
         return $base;
     }
 
+    /**
+     * Scan quiz.
+     */
     protected function scan_quiz($cm, $base) {
         global $DB;
-        $quiz = $DB->get_record('quiz', array('id' => $cm->instance));
+        $quiz = $DB->get_record('quiz', ['id' => $cm->instance]);
         if (!$quiz) {
             return null;
         }
@@ -302,8 +367,8 @@ class scanner {
         $base['type'] = 'quiz';
         $base['description'] = strip_tags($quiz->intro ?? 'Quiz assessment');
 
-        $questionCount = $DB->count_records('quiz_slots', array('quizid' => $quiz->id));
-        $base['question_count'] = $questionCount;
+        $questioncount = $DB->count_records('quiz_slots', ['quizid' => $quiz->id]);
+        $base['question_count'] = $questioncount;
         $base['max_attempts'] = isset($quiz->attempts) ? (int)$quiz->attempts : 0;
         $base['time_limit'] = !empty($quiz->timelimit) ? round($quiz->timelimit / 60) : null;
         $base['passing_grade'] = !empty($quiz->gradepass) ? (float)$quiz->gradepass : 0;
@@ -311,15 +376,18 @@ class scanner {
         if (!empty($quiz->timelimit)) {
             $base['estimated_minutes'] = round($quiz->timelimit / 60);
         } else {
-            $base['estimated_minutes'] = max(10, $questionCount * 2);
+            $base['estimated_minutes'] = max(10, $questioncount * 2);
         }
 
         return $base;
     }
 
+    /**
+     * Scan forum.
+     */
     protected function scan_forum($cm, $base) {
         global $DB;
-        $forum = $DB->get_record('forum', array('id' => $cm->instance));
+        $forum = $DB->get_record('forum', ['id' => $cm->instance]);
         if (!$forum) {
             return null;
         }
@@ -331,23 +399,29 @@ class scanner {
         return $base;
     }
 
+    /**
+     * Scan resource.
+     */
     protected function scan_resource($cm, $base) {
         $base['type'] = 'resource';
-        $typeLabels = array(
+        $typelabels = [
             'resource' => 'File resource',
             'url' => 'External URL resource',
             'page' => 'Page resource',
             'book' => 'Book resource',
-        );
-        $base['description'] = $typeLabels[$cm->modname] ?? 'Learning resource';
+        ];
+        $base['description'] = $typelabels[$cm->modname] ?? 'Learning resource';
         $base['estimated_minutes'] = 10;
 
         return $base;
     }
 
+    /**
+     * Scan aivideoactivity.
+     */
     protected function scan_aivideoactivity($cm, $base) {
         global $DB;
-        $va = $DB->get_record('aivideoactivity', array('id' => $cm->instance));
+        $va = $DB->get_record('aivideoactivity', ['id' => $cm->instance]);
 
         $base['type'] = 'videoactivity';
         $base['description'] = 'AI video activity';
@@ -356,6 +430,9 @@ class scanner {
         return $base;
     }
 
+    /**
+     * Scan generic.
+     */
     protected function scan_generic($cm, $base) {
         $base['type'] = 'other';
         $base['description'] = 'Learning activity (' . $cm->modname . ')';
@@ -364,40 +441,46 @@ class scanner {
         return $base;
     }
 
+    /**
+     * Scan essaymaker in course.
+     */
     protected function scan_essaymaker_in_course() {
         global $DB;
         try {
             if (!$DB->get_manager()->table_exists('local_essaymaker_essays')) {
-                return array();
+                return [];
             }
-            $essays = $DB->get_records('local_essaymaker_essays', array('courseid' => $this->courseid));
-            $result = array();
+            $essays = $DB->get_records('local_essaymaker_essays', ['courseid' => $this->courseid]);
+            $result = [];
             foreach ($essays as $essay) {
-                $questionCount = 0;
+                $questioncount = 0;
                 if (!empty($essay->generatedcontent)) {
                     $content = json_decode($essay->generatedcontent, true);
                     if ($content && isset($content['questions'])) {
-                        $questionCount = count($content['questions']);
+                        $questioncount = count($content['questions']);
                     }
                 }
-                $result[] = array(
+                $result[] = [
                     'type' => 'essaymaker',
                     'name' => $essay->name ?? 'Essay Questions',
-                    'description' => 'AI-generated essay questions for knowledge evidence',
-                    'question_count' => $questionCount,
-                    'estimated_minutes' => max(2, $questionCount * 2),
-                );
+                    'description' => 'Essay questions for knowledge evidence',
+                    'question_count' => $questioncount,
+                    'estimated_minutes' => max(2, $questioncount * 2),
+                ];
             }
             return $result;
         } catch (\Exception $e) {
-            return array();
+            return [];
         }
     }
 
+    /**
+     * Scan course environment.
+     */
     public function scan_course_environment() {
         global $DB, $CFG, $SITE;
 
-        $env = array(
+        $env = [
             'ai_course_format' => false,
             'ai_tutor_enabled' => false,
             'ai_support_installed' => false,
@@ -405,8 +488,8 @@ class scanner {
             'site_phone' => '',
             'site_email' => '',
             'site_url' => $CFG->wwwroot ?? '',
-            'installed_plugins' => array(),
-        );
+            'installed_plugins' => [],
+        ];
 
         $env['ai_course_format'] = ($this->course->format === 'aicourseformat');
 
@@ -414,8 +497,8 @@ class scanner {
             try {
                 // AI Tutor is a site-wide admin setting in format_aicourse (not per-course).
                 // Read from config_plugins where plugin='format_aicourse', name='enabletutor'.
-                $tutorVal = get_config('format_aicourse', 'enabletutor');
-                if ($tutorVal !== false && $tutorVal !== '0' && !empty($tutorVal)) {
+                $tutorval = get_config('format_aicourse', 'enabletutor');
+                if ($tutorval !== false && $tutorval !== '0' && !empty($tutorval)) {
                     $env['ai_tutor_enabled'] = true;
                 }
             } catch (\Exception $e) {
@@ -428,7 +511,7 @@ class scanner {
                 "SELECT bi.id, bi.blockname FROM {block_instances} bi
                  JOIN {context} ctx ON bi.parentcontextid = ctx.id
                  WHERE ctx.contextlevel = 50 AND ctx.instanceid = :courseid",
-                array('courseid' => $this->courseid)
+                ['courseid' => $this->courseid]
             );
             foreach ($blocks as $block) {
                 if ($block->blockname === 'aiplugin_nav') {
@@ -441,36 +524,36 @@ class scanner {
         }
 
         try {
-            $sysBlocks = $DB->get_records_sql(
+            $sysblocks = $DB->get_records_sql(
                 "SELECT bi.id, bi.blockname FROM {block_instances} bi
                  JOIN {context} ctx ON bi.parentcontextid = ctx.id
                  WHERE ctx.contextlevel = 10 AND bi.blockname = 'aiplugin_nav'"
             );
-            if (!empty($sysBlocks)) {
+            if (!empty($sysblocks)) {
                 $env['ai_support_installed'] = true;
             }
         } catch (\Exception $e) {
             // system blocks query failed
         }
 
-        $env['site_name'] = isset($SITE->fullname) ? $SITE->fullname : ($DB->get_field('course', 'fullname', array('id' => SITEID)) ?: '');
+        $env['site_name'] = isset($SITE->fullname) ? $SITE->fullname : ($DB->get_field('course', 'fullname', ['id' => SITEID]) ?: '');
 
-        $supportEmail = get_config('moodle', 'supportemail');
-        if (empty($supportEmail)) {
-            $supportEmail = $CFG->supportemail ?? '';
+        $supportemail = get_config('moodle', 'supportemail');
+        if (empty($supportemail)) {
+            $supportemail = $CFG->supportemail ?? '';
         }
-        if (empty($supportEmail)) {
-            $supportEmail = get_config('moodle', 'noreplyaddress') ?? '';
+        if (empty($supportemail)) {
+            $supportemail = get_config('moodle', 'noreplyaddress') ?? '';
         }
-        $env['site_email'] = $supportEmail;
+        $env['site_email'] = $supportemail;
 
-        $supportPhone = get_config('moodle', 'supportphone');
-        if (empty($supportPhone)) {
-            $supportPhone = '';
+        $supportphone = get_config('moodle', 'supportphone');
+        if (empty($supportphone)) {
+            $supportphone = '';
         }
-        $env['site_phone'] = $supportPhone;
+        $env['site_phone'] = $supportphone;
 
-        $pluginChecks = array(
+        $pluginchecks = [
             'mod_contentcreator' => 'AI Content Creator',
             'mod_aiactivities' => 'AI Learning Activities',
             'mod_aiknowledgecheck' => 'AI Knowledge Check',
@@ -479,9 +562,9 @@ class scanner {
             'mod_practicalassessment' => 'AI Practical Assessment',
             'local_moodlesupport' => 'AI Support',
             'mod_learningmapping' => 'AI Mapping',
-        );
+        ];
 
-        foreach ($pluginChecks as $component => $label) {
+        foreach ($pluginchecks as $component => $label) {
             $version = get_config($component, 'version');
             if ($version) {
                 $env['installed_plugins'][] = $label;
@@ -491,11 +574,14 @@ class scanner {
         return $env;
     }
 
+    /**
+     * Scan complete.
+     */
     public function scan_complete() {
         $result = $this->scan_all_activities();
 
-        $essayItems = $this->scan_essaymaker_in_course();
-        foreach ($essayItems as $item) {
+        $essayitems = $this->scan_essaymaker_in_course();
+        foreach ($essayitems as $item) {
             $result['activities'][] = $item;
             $result['summary']['total_activities']++;
             if (!isset($result['summary']['by_type']['essaymaker'])) {

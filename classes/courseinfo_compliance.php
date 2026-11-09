@@ -53,12 +53,11 @@ class courseinfo_compliance {
         $total     = 0;
         $passed    = 0;
 
-        foreach ($structure as $sectionKey => $section) {
-
+        foreach ($structure as $sectionkey => $section) {
             // Section-level check.
             if ($section['required']) {
                 $total++;
-                if (empty($data[$sectionKey])) {
+                if (empty($data[$sectionkey])) {
                     $missing[] = "{$section['label']} section is missing";
                     continue;
                 }
@@ -66,19 +65,19 @@ class courseinfo_compliance {
             }
 
             // Field-level check.
-            foreach ($section['fields'] as $fieldKey => $required) {
+            foreach ($section['fields'] as $fieldkey => $required) {
                 if (!$required) {
                     continue;  // Optional fields: skip for compliance score
                 }
 
                 $total++;
                 $value = '';
-                if (is_array($data[$sectionKey] ?? null)) {
-                    $value = $data[$sectionKey][$fieldKey] ?? '';
+                if (is_array($data[$sectionkey] ?? null)) {
+                    $value = $data[$sectionkey][$fieldkey] ?? '';
                 }
 
                 if (empty($value) || strlen(trim((string)$value)) < self::MIN_FIELD_LENGTH) {
-                    $missing[] = "{$section['label']} → {$fieldKey} is missing or too short";
+                    $missing[] = "{$section['label']} → {$fieldkey} is missing or too short";
                 } else {
                     $passed++;
                 }
@@ -86,17 +85,17 @@ class courseinfo_compliance {
         }
 
         // Optional field warnings (not missing, but worth noting if empty).
-        foreach ($structure as $sectionKey => $section) {
-            foreach ($section['fields'] as $fieldKey => $required) {
+        foreach ($structure as $sectionkey => $section) {
+            foreach ($section['fields'] as $fieldkey => $required) {
                 if ($required) {
                     continue;
                 }
                 $value = '';
-                if (is_array($data[$sectionKey] ?? null)) {
-                    $value = $data[$sectionKey][$fieldKey] ?? '';
+                if (is_array($data[$sectionkey] ?? null)) {
+                    $value = $data[$sectionkey][$fieldkey] ?? '';
                 }
                 if (empty($value)) {
-                    $warnings[] = "{$section['label']} → {$fieldKey} is optional but not populated";
+                    $warnings[] = "{$section['label']} → {$fieldkey} is optional but not populated";
                 }
             }
         }
