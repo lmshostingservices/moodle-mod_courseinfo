@@ -147,7 +147,7 @@ class generator {
             return ['status' => 'running', 'retryable' => false];
         }
         if (($poll['status'] ?? '') === 'error') {
-            return ['status' => 'failed', 'retryable' => false, 'error' => clean_param((string)($poll['error'] ?? 'Course Information generation failed.'), PARAM_TEXT)];
+            return ['status' => 'failed', 'retryable' => (bool)preg_match('/timeout|timed out|providers exhausted|temporarily|overloaded|rate limit/i', (string)($poll['error'] ?? '')), 'error' => clean_param((string)($poll['error'] ?? 'Course Information generation failed.'), PARAM_TEXT)];
         }
         $result = $poll['result'] ?? null;
         if (($poll['status'] ?? '') !== 'done' || !is_array($result) || empty($result['success']) || empty($result['html'])) {

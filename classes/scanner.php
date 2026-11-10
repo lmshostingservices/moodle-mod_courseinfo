@@ -74,7 +74,7 @@ class scanner {
             }
             foreach ($modinfo->sections[$section->section] as $cmid) {
                 $cm = $modinfo->cms[$cmid];
-                if (!$cm->uservisible || $cm->deletioninprogress) {
+                if (!$cm->uservisible || !$cm->visible || $cm->deletioninprogress) {
                     continue;
                 }
                 if ($cm->modname === 'courseinfo') {
