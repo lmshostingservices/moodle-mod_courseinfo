@@ -1,5 +1,8 @@
 # AI Course Information
 
+## [1.0.61] - 2026-11-10
+- Course Builder requests carry a stable `idempotencyKey` and the `attempt` number, so a retry after a timeout returns the job already running instead of charging again.
+
 ## [1.0.60] - 2026-11-10
 
 - A Course Builder generation that times out, or hits a busy or unavailable provider, is retried automatically instead of failing for good.

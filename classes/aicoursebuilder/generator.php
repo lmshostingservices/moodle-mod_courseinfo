@@ -103,6 +103,10 @@ class generator {
             'secondaryColour' => $primarycolour,
             'enableAsqa' => isset($instance->enableasqa) ? !empty($instance->enableasqa) : true,
             // The curriculum outcomes the teacher pasted into AI Course Builder for this course's unit.
+            // The same key for every start of this Course Builder job, so a retry after a timeout
+            // or a lost connection returns the job already running instead of charging again.
+            'idempotencyKey' => (string)($brief['idempotencyKey'] ?? ''),
+            'attempt' => (int)($brief['attempt'] ?? 1),
             'learningOutcomes' => array_values(array_map('strval', (array)($frameworkdata['outcomes'] ?? (
                 method_exists('\\local_aicoursebuilder\\local\\course_builder', 'unit_outcomes')
                     ? \local_aicoursebuilder\local\course_builder::unit_outcomes((int)$course->id) : []
