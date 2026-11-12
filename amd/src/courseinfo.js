@@ -1140,7 +1140,9 @@ define([], function() {
                 essaymaker:'AI Essay Grader', knowledgecheck:'AI Knowledge Check',
                 assignment:'Assignment', practicalassessment:'Practical Assessment',
                 quiz:'Quiz', forum:'Forum', resource:'Resource',
-                videoactivity:'Video Activity', other:'Other'
+                videoactivity:'Video Activity', visuallearning:'Visual Learning', productexplainer:'Slide Flow',
+                aisafetyhazards:'Safety Hazards', aisoftskills:'Soft Skills', aibranchedscenario:'Branched Scenario',
+                aianatomy:'Anatomy', other:'Other'
             };
 
             html += '<table style="width:100%;border-collapse:collapse;font-size:0.85em;">';
@@ -1156,7 +1158,7 @@ define([], function() {
                 var rowBg = i % 2 === 1 ? surface : '#fff';
                 var actType = act.type || act.modname || 'other';
                 var swatchColor = typeColors[actType] || '#607d8b';
-                var friendlyType = typeLabels[actType] || actType;
+                var friendlyType = act.typeLabel || typeLabels[actType] || actType;
                 html += '<tr style="background:' + rowBg + ';border-bottom:1px solid ' + border + ';">';
                 html += '<td style="padding:5px 10px;color:#64748b;white-space:nowrap;">' + (i+1) + '</td>';
                 html += '<td style="padding:5px 10px;color:#1e293b;">';

@@ -434,6 +434,22 @@ class scanner {
      * Scan generic.
      */
     protected function scan_generic($cm, $base) {
+        // LMS Labs activities that have no scanner of their own still get their real name and type.
+        $known = [
+            'productexplainer' => ['Slide Flow', 'Structured training slides with images and optional voiceover', 10],
+            'aisafetyhazards' => ['Safety Hazards', 'Spot-the-hazard workplace scene with feedback on each hazard', 10],
+            'aisoftskills' => ['Soft Skills', 'Role-play practice of a workplace conversation with feedback', 10],
+            'aibranchedscenario' => ['Branched Scenario', 'Decision scenario where each choice leads to a different outcome', 10],
+            'aianatomy' => ['Anatomy', 'Labelled body diagram with practice and a check', 10],
+        ];
+        if (isset($known[$cm->modname])) {
+            [$label, $description, $minutes] = $known[$cm->modname];
+            $base['type'] = $cm->modname;
+            $base['typeLabel'] = $label;
+            $base['description'] = $description;
+            $base['estimated_minutes'] = $minutes;
+            return $base;
+        }
         $base['type'] = 'other';
         $base['description'] = 'Learning activity (' . $cm->modname . ')';
         $base['estimated_minutes'] = 15;

@@ -1,5 +1,8 @@
 # AI Course Information
 
+## [1.0.62] - 2026-11-12
+- Slide Flow, Safety Hazards, Soft Skills, Branched Scenario and Anatomy are listed by their real names and times, not as "Other".
+
 ## [1.0.61] - 2026-11-10
 - Course Builder requests carry a stable `idempotencyKey` and the `attempt` number, so a retry after a timeout returns the job already running instead of charging again.
 
