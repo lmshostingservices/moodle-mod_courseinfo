@@ -61,6 +61,24 @@ function courseinfo_get_api_config() {
 }
 
 /**
+ * Tell Client Portal (when installed) what a generation cost (100 credits unless the service says otherwise), so the
+ * site owner can bill the client.
+ *
+ * @param context $context
+ * @param array $reply
+ * @param string $description
+ * @param string $ref job id, so a job is counted once
+ * @return void
+ */
+function courseinfo_report_usage($context, $reply, $description, $ref = '') {
+    global $USER;
+    if (method_exists('\\local_clientportal\\api', 'record_lmslabs_call')) {
+        \local_clientportal\api::record_lmslabs_call((int)$USER->id, (int)$context->id, 'mod_courseinfo',
+            ['charged' => $reply['creditsCharged'] ?? ($reply['creditsUsed'] ?? 100)], 100, $description, (string)$ref);
+    }
+}
+
+/**
  * Courseinfo api call.
  */
 function courseinfo_api_call($url, $data, $config) {
@@ -186,6 +204,7 @@ try {
             $result = courseinfo_api_call($apiurl, $apidata, $config);
 
             if (!empty($result['success']) || !empty($result['html'])) {
+                courseinfo_report_usage($context, $result, 'Course information');
                 $html     = $result['html'] ?? '';
 
                 /* BUG-CI-HTMLSTRIP: Strip document-level tags from AI-generated HTML.
@@ -306,6 +325,7 @@ try {
                 echo json_encode(['success' => false, 'error' => $result['error'] ?? 'Failed to start generation job']);
                 break;
             }
+            courseinfo_report_usage($context, $result, 'Course information', (string)$result['jobId']);
             echo json_encode(['success' => true, 'jobId' => $result['jobId'], 'async' => true]);
             break;
 
