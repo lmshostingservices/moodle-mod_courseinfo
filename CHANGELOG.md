@@ -1,5 +1,9 @@
 # AI Course Information
 
+## [1.0.64] - 2026-11-24
+
+- Added a test data generator, so the activity can be created by Moodle's automated tests and by demo and course-building tools. Tests cover creating, listing, deleting, backing up and restoring the activity.
+
 ## [1.0.63] - 2026-11-13
 
 ### Added
