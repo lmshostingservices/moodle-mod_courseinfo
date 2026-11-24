@@ -505,8 +505,8 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026111300;
+$plugin->version   = 2026112400;
 $plugin->requires  = 2022041900;
 $plugin->component = 'mod_courseinfo';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = '1.0.63';
+$plugin->release   = '1.0.64';
