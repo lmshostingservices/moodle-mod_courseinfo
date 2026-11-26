@@ -1,5 +1,9 @@
 # AI Course Information
 
+## [1.1.0] - 2026-11-26
+
+- **Bring your own AI key.** When the site has an LMS Labs BYOK licence and AI Connect (local_aiconfig 1.1.0 or later) sets Text to Moodle AI or an own key, Course Information is written on the site's own AI. The prompts for every framework and the HTML clean-up are a port of the LMS Labs service, generated from its source and checked word for word against it. No credits are used, the credit confirmation is replaced by a short "your own AI" confirmation, and no Client Portal usage is recorded. If the provider fails, the teacher sees the reason and nothing falls back to credits.
+
 ## [1.0.64] - 2026-11-24
 
 - Added a test data generator, so the activity can be created by Moodle's automated tests and by demo and course-building tools. Tests cover creating, listing, deleting, backing up and restoring the activity.

@@ -71,6 +71,9 @@ function courseinfo_get_api_config() {
  * @return void
  */
 function courseinfo_report_usage($context, $reply, $description, $ref = '') {
+    if (!empty($reply['byok'])) {
+        return;
+    }
     global $USER;
     if (method_exists('\\local_clientportal\\api', 'record_lmslabs_call')) {
         \local_clientportal\api::record_lmslabs_call((int)$USER->id, (int)$context->id, 'mod_courseinfo',
@@ -82,6 +85,10 @@ function courseinfo_report_usage($context, $reply, $description, $ref = '') {
  * Courseinfo api call.
  */
 function courseinfo_api_call($url, $data, $config) {
+    // Bring your own AI: answered on this site's own AI, no LMS Labs call and no credits.
+    if (($local = \mod_courseinfo\local\byok::handle($url, $data)) !== null) {
+        return $local;
+    }
     $curl = new \curl();
     $curl->setopt(['CURLOPT_TIMEOUT' => 120, 'CURLOPT_CONNECTTIMEOUT' => 15]);
     $headers  = ['Content-Type: application/json', 'Accept: application/json'];
@@ -112,6 +119,8 @@ try {
 
     require_login($course, true, $cm);
     require_sesskey();
+
+    $byok = \mod_courseinfo\local\byok::enabled();
 
     switch ($action) {
         /* ── Scan activities ─────────────────────────────────────────────── */
@@ -176,7 +185,7 @@ try {
             }
 
             $config = courseinfo_get_api_config();
-            if (empty($config['siteid']) || empty($config['apikey'])) {
+            if (!$byok && (empty($config['siteid']) || empty($config['apikey']))) {
                 echo json_encode(['success' => false, 'error' => get_string('configerror', 'courseinfo')]);
                 break;
             }
@@ -264,7 +273,7 @@ try {
             \core\session\manager::write_close();
 
             $config = courseinfo_get_api_config();
-            if (empty($config['siteid']) || empty($config['apikey'])) {
+            if (!$byok && (empty($config['siteid']) || empty($config['apikey']))) {
                 echo json_encode(['success' => false, 'error' => get_string('configerror', 'courseinfo')]);
                 break;
             }
@@ -333,6 +342,10 @@ try {
         case 'poll':
             $jobid = required_param('jobId', PARAM_ALPHANUMEXT);
             \core\session\manager::write_close();
+            if (($local = \mod_courseinfo\local\byok::poll($jobid)) !== null) {
+                echo json_encode($local);
+                break;
+            }
             $config = courseinfo_get_api_config();
             $pollurl = rtrim($config['apiurl'], '/') . '/api/jobs/' . urlencode($jobid);
             $curl = new \curl();
@@ -388,6 +401,11 @@ try {
         /* ── Check AI credits ────────────────────────────────────────────── */
         case 'getcredits':
             courseinfo_require_manage($context);
+            if ($byok) {
+                // No credits are used: the page skips the credit check.
+                echo json_encode(['success' => true, 'byok' => true, 'credits' => -1]);
+                break;
+            }
             $config = courseinfo_get_api_config();
             if (empty($config['siteid']) || empty($config['apikey'])) {
                 echo json_encode(['success' => false, 'error' => 'Plugin not configured: Missing Site ID or API Key. Go to Site admin > Plugins > AI Grader Central Config.']);
@@ -442,7 +460,7 @@ try {
         case 'checkconfig':
             courseinfo_require_manage($context);
             $config = courseinfo_get_api_config();
-            if (empty($config['siteid']) || empty($config['apikey'])) {
+            if (!$byok && (empty($config['siteid']) || empty($config['apikey']))) {
                 echo json_encode(['success' => false, 'error' => get_string('configerror', 'courseinfo')]);
                 break;
             }

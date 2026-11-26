@@ -124,3 +124,5 @@ $string['volbreakdown'] = 'Volume of Learning Breakdown';
 $string['volumeoflearning'] = 'Volume of Learning';
 $string['volumeoflearning_help'] = 'The Volume of Learning represents the total amount of time a student is expected to spend on all learning activities for this unit, including supervised training, self-directed study, assessment, and workplace practice.';
 $string['yearlevel'] = 'Year level';
+$string['byok_failed'] = 'Your AI provider could not write the course information: {$a}';
+$string['byok_notavailable'] = 'Your own AI is not available. Ask your site administrator to check Bring your own AI in AI Connect.';
