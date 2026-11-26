@@ -57,7 +57,7 @@ final class byok_test extends \advanced_testcase {
         set_config('testpublickey', base64_encode(sodium_crypto_sign_publickey($pair)), 'local_aiconfig');
         $payload = json_encode(['v' => 1, 'id' => 'lic_t', 'site' => \local_aiconfig\byok\licence::site_host(),
             'plan' => 'pro', 'byok' => true, 'products' => ['*'], 'sub' => 'sub_t', 'exp' => time() + DAYSECS]);
-        $b64 = function(string $s): string {
+        $b64 = function (string $s): string {
             return rtrim(strtr(base64_encode($s), '+/', '-_'), '=');
         };
         set_config('licencekey', $b64($payload) . '.' .
@@ -82,7 +82,7 @@ final class byok_test extends \advanced_testcase {
      */
     protected function answer(?array $answer): void {
         $this->requests = [];
-        $GLOBALS['local_aiconfig_byok_mock'] = function($url, $headers, $body) use ($answer) {
+        $GLOBALS['local_aiconfig_byok_mock'] = function ($url, $headers, $body) use ($answer) {
             $this->requests[] = $body;
             if ($answer === null) {
                 throw new \moodle_exception('byok_providererror', 'local_aiconfig', '', 'Overloaded');
@@ -109,8 +109,11 @@ final class byok_test extends \advanced_testcase {
         $poll = byok::poll($start['jobId']);
         $this->assertSame('done', $poll['status']);
         $this->assertTrue($poll['result']['success']);
-        $this->assertSame('<style>#courseinfo-generated .x{color:red}</style><div class="ci-card"><i class="fa fa-tasks"></i>Course</div>',
-            $poll['result']['html']);
+        $this->assertSame(
+            '<style>#courseinfo-generated .x{color:red}</style><div class="ci-card"><i class="fa ' .
+            'fa-tasks"></i>Course</div>',
+            $poll['result']['html']
+        );
         $this->assertSame('Isolate plant safely.', $poll['result']['structured']['overview']);
         $system = $this->requests[0]['system'];
         $this->assertStringContainsString('elite Australian RTO compliance officer', $system);
@@ -125,8 +128,10 @@ final class byok_test extends \advanced_testcase {
         $out = byok::handle('https://lms-labs.com/api/moodle/course-info/generate', $payload);
         $this->assertTrue($out['success']);
         $this->assertStringContainsString('in the University framework', $this->requests[0]['system']);
-        $this->assertStringContainsString("Framework: University\nCourse: BIO101",
-            $this->requests[0]['messages'][0]['content'][0]['text']);
+        $this->assertStringContainsString(
+            "Framework: University\nCourse: BIO101",
+            $this->requests[0]['messages'][0]['content'][0]['text']
+        );
     }
 
     public function test_provider_failure_becomes_a_job_error(): void {

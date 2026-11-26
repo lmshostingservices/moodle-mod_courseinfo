@@ -1010,6 +1010,26 @@ define([], function() {
     }
 
     /* -- Credit check + generate ------------------------------------------- */
+
+    /**
+     * Ask to generate on the site's own AI (Bring your own AI): no LMS Labs credits are used.
+     *
+     * @returns {Promise}
+     */
+    function confirmOwnAi() {
+        return ciShowConfirm(
+            'Course Information will be written by <strong>your own AI</strong>. No LMS Labs credits are used.',
+            {title: 'Generate Course Information', confirmText: 'Generate', cancelText: 'Cancel', type: 'default'}
+        ).then(function(confirmed) {
+            if (confirmed) {
+                generateCourseInfo();
+            }
+            return confirmed;
+        }).catch(function() {
+            return false;
+        });
+    }
+
     function checkCreditsAndGenerate() {
         var btnGen   = document.getElementById('btn-generate');
         var origHtml = btnGen ? btnGen.innerHTML : '';
@@ -1038,13 +1058,7 @@ define([], function() {
             }
 
             if (data.byok) {
-                /* Bring your own AI: generated on this site's own AI, no credits used. */
-                ciShowConfirm(
-                    'Course Information will be written by <strong>your own AI</strong>. No LMS Labs credits are used.',
-                    { title: 'Generate Course Information', confirmText: 'Generate', cancelText: 'Cancel', type: 'default' }
-                ).then(function(confirmed) {
-                    if (confirmed) { generateCourseInfo(); }
-                });
+                confirmOwnAi();
                 return;
             }
 
